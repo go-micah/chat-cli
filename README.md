@@ -2,6 +2,8 @@
 
 A little terminal based program that talks to the Amazon Bedrock API.
 
+![](images/claude-1.png)
+
 ## Prerequisites
 
 1. You will need an AWS account.
