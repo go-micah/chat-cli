@@ -66,6 +66,12 @@ func StringPrompt(label string) string {
 			break
 		}
 	}
+
+	// check for special words
+	if strings.Contains(s, "quit") {
+		os.Exit(0)
+	}
+
 	return strings.TrimSpace(s)
 }
 
