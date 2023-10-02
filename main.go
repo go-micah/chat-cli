@@ -13,6 +13,16 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
 )
 
+type PayloadBody struct {
+	Prompt            string   `json:"prompt"`
+	MaxTokensToSample int      `json:"max_tokens_to_sample"`
+	Temperature       float64  `json:"temperature"`
+	TopK              int      `json:"top_k"`
+	TopP              float64  `json:"top_p"`
+	StopSequences     []string `json:"stop_sequences"`
+	AnthropicVersion  string   `json:"anthropic_version"`
+}
+
 // SendToBedrock is a function that sends a post request to Bedrock
 // and returns the response
 func SendToBedrock(prompt string) string {
@@ -27,13 +37,28 @@ func SendToBedrock(prompt string) string {
 	accept := "*/*"
 	modelId := "anthropic.claude-v2"
 	contentType := "application/json"
-	body := "{\"prompt\":\"Human: \\n\\nHuman: " + prompt + "\\n\\nAssistant:\",\"max_tokens_to_sample\":300,\"temperature\":1,\"top_k\":250,\"top_p\":0.999,\"stop_sequences\":[\"\\n\\nHuman:\"],\"anthropic_version\":\"bedrock-2023-05-31\"}"
+
+	var body PayloadBody
+	body.Prompt = "Human: \n\nHuman: " + prompt + "\n\nAssistant:"
+	body.MaxTokensToSample = 300
+	body.Temperature = 1
+	body.TopK = 250
+	body.TopP = 0.999
+	body.StopSequences = []string{
+		`"\n\nHuman:\"`,
+	}
+	body.AnthropicVersion = "bedrock-2023-05-31"
+
+	payloadBody, e := json.Marshal(body)
+	if e != nil {
+		panic(e)
+	}
 
 	resp, err := svc.InvokeModel(context.TODO(), &bedrockruntime.InvokeModelInput{
 		Accept:      &accept,
 		ModelId:     &modelId,
 		ContentType: &contentType,
-		Body:        []byte(body),
+		Body:        []byte(string(payloadBody)),
 	})
 
 	if err != nil {
@@ -72,6 +97,7 @@ func StringPrompt(label string) string {
 		os.Exit(0)
 	}
 
+	s = "\\n\\nHuman: " + s
 	return strings.TrimSpace(s)
 }
 
@@ -84,12 +110,17 @@ func main() {
 	resp := SendToBedrock(prompt)
 	fmt.Printf("%s\n", resp)
 
+	conversation := prompt + "\\n\\nAssistant: " + resp
+
 	// tty-loop
 	for {
 		prompt = StringPrompt(">")
 
-		resp = SendToBedrock(prompt)
+		conversation = conversation + prompt
+
+		resp = SendToBedrock(conversation)
 		fmt.Printf("%s\n", resp)
+		conversation = conversation + "\\n\\nAssistant: " + resp
 	}
 
 }
