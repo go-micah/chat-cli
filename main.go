@@ -93,7 +93,7 @@ func StringPrompt(label string) string {
 	}
 
 	// check for special words
-	if strings.Contains(s, "quit") {
+	if s == "quit\n" {
 		os.Exit(0)
 	}
 
