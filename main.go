@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
@@ -49,9 +48,10 @@ func SendToBedrock(prompt string) string {
 	}
 	body.AnthropicVersion = "bedrock-2023-05-31"
 
-	payloadBody, e := json.Marshal(body)
-	if e != nil {
-		panic(e)
+	payloadBody, err := json.Marshal(body)
+	if err != nil {
+		log.Printf("unable to read prompt:, %v", err)
+		return "Bedrock says what?!?"
 	}
 
 	resp, err := svc.InvokeModel(context.TODO(), &bedrockruntime.InvokeModelInput{
@@ -62,7 +62,7 @@ func SendToBedrock(prompt string) string {
 	})
 
 	if err != nil {
-		log.Fatalf("error from Bedrock, %v", err)
+		log.Printf("error from Bedrock, %v", err)
 		return "Bedrock says what?!?"
 	}
 
@@ -73,7 +73,8 @@ func SendToBedrock(prompt string) string {
 
 	err = json.Unmarshal([]byte(resp.Body), &response)
 	if err != nil {
-		fmt.Println("error:", err)
+		log.Printf("unable to decode response:, %v", err)
+		return "Bedrock says what?!?"
 	}
 
 	return response.Completion
@@ -82,8 +83,10 @@ func SendToBedrock(prompt string) string {
 
 // StringPrompt is a function that asks for a string value using the label
 func StringPrompt(label string) string {
+
 	var s string
 	r := bufio.NewReader(os.Stdin)
+
 	for {
 		fmt.Fprint(os.Stderr, label+" ")
 		s, _ = r.ReadString('\n')
@@ -92,33 +95,28 @@ func StringPrompt(label string) string {
 		}
 	}
 
-	// check for special words
-	if s == "quit\n" {
-		os.Exit(0)
-	}
-
-	s = "\\n\\nHuman: " + s
-	return strings.TrimSpace(s)
+	return s
 }
 
 func main() {
 
 	// initial prompt
 	fmt.Printf("Hi there. You can ask me stuff!\n")
-	prompt := StringPrompt(">")
 
-	resp := SendToBedrock(prompt)
-	fmt.Printf("%s\n", resp)
-
-	conversation := prompt + "\\n\\nAssistant: " + resp
+	// stores full conversation
+	var conversation string
 
 	// tty-loop
 	for {
-		prompt = StringPrompt(">")
+		prompt := StringPrompt(">")
 
-		conversation = conversation + prompt
+		// check for special words
+		if prompt == "quit\n" {
+			os.Exit(0)
+		}
 
-		resp = SendToBedrock(conversation)
+		conversation = conversation + "\\n\\nHuman: " + prompt
+		resp := SendToBedrock(conversation)
 		fmt.Printf("%s\n", resp)
 		conversation = conversation + "\\n\\nAssistant: " + resp
 	}
