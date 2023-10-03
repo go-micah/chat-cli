@@ -157,11 +157,13 @@ func main() {
 		}
 
 		if prompt == "save\n" {
+			prompt = ""
 			SaveToFile(conversation)
 			continue
 		}
 
 		if prompt == "load\n" {
+			prompt = ""
 			conversation = LoadFromFile()
 			fmt.Print(conversation)
 			continue
