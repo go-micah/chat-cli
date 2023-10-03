@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
@@ -20,6 +21,46 @@ type PayloadBody struct {
 	TopP              float64  `json:"top_p"`
 	StopSequences     []string `json:"stop_sequences"`
 	AnthropicVersion  string   `json:"anthropic_version"`
+}
+
+// LoadFromFile is a function that loads a chat transcript from a text file
+func LoadFromFile() string {
+	t := time.Now()
+	filename := "chats/" + t.Format("2006-01-02") + ".txt"
+	file, err := os.Open(filename)
+	if err != nil {
+		log.Printf("unable to open file, %v", err)
+		return "Bedrock says what?!?"
+	}
+	defer file.Close()
+	reader := bufio.NewReader(file)
+	var transcript string
+	for {
+		line, err := reader.ReadString('\n')
+		transcript += line + "\n"
+		if err != nil {
+			break
+		}
+	}
+	return transcript
+}
+
+// SaveToFile is a function that saves a chat transcript to a text file
+func SaveToFile(transcript string) {
+	_ = os.Mkdir("chats", os.ModePerm)
+	t := time.Now()
+	filename := "chats/" + t.Format("2006-01-02") + ".txt"
+
+	file, err := os.Create(filename)
+	if err != nil {
+		log.Printf("unable to create file, %v", err)
+		return
+	}
+	defer file.Close()
+	writer := bufio.NewWriter(file)
+	writer.WriteString(transcript)
+	writer.Flush()
+	log.Printf("chat transcript saved to file")
 }
 
 // SendToBedrock is a function that sends a post request to Bedrock
@@ -115,10 +156,21 @@ func main() {
 			os.Exit(0)
 		}
 
-		conversation = conversation + "\\n\\nHuman: " + prompt
+		if prompt == "save\n" {
+			SaveToFile(conversation)
+			continue
+		}
+
+		if prompt == "load\n" {
+			conversation = LoadFromFile()
+			fmt.Print(conversation)
+			continue
+		}
+
+		conversation = conversation + " \\n\\nHuman: " + prompt
 		resp := SendToBedrock(conversation)
 		fmt.Printf("%s\n", resp)
-		conversation = conversation + "\\n\\nAssistant: " + resp
+		conversation = conversation + " \\n\\nAssistant: " + resp
 	}
 
 }
