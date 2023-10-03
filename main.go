@@ -171,6 +171,14 @@ func main() {
 			continue
 		}
 
+		// clears chat transcript from memory
+		if prompt == "clear\n" {
+			prompt = ""
+			conversation = ""
+			fmt.Print("Conversation cleared.\n\n")
+			continue
+		}
+
 		conversation = conversation + " \\n\\nHuman: " + prompt
 		resp := SendToBedrock(conversation)
 		fmt.Printf("%s\n", resp)
