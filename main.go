@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
 )
 
+// PayloadBody is a struct that represents the payload body for the post request to Bedrock
 type PayloadBody struct {
 	Prompt            string   `json:"prompt"`
 	MaxTokensToSample int      `json:"max_tokens_to_sample"`
@@ -63,8 +64,7 @@ func SaveToFile(transcript string) {
 	log.Printf("chat transcript saved to file")
 }
 
-// SendToBedrock is a function that sends a post request to Bedrock
-// and returns the response
+// SendToBedrock is a function that sends a post request to Bedrock and returns the response
 func SendToBedrock(prompt string) string {
 
 	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("us-east-1"))
@@ -156,12 +156,14 @@ func main() {
 			os.Exit(0)
 		}
 
+		// saves chat transcript to file
 		if prompt == "save\n" {
 			prompt = ""
 			SaveToFile(conversation)
 			continue
 		}
 
+		// loads chat transcript from file
 		if prompt == "load\n" {
 			prompt = ""
 			conversation = LoadFromFile()
