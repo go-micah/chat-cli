@@ -11,6 +11,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
+	"github.com/briandowns/spinner"
 )
 
 // PayloadBody is a struct that represents the payload body for the post request to Bedrock
@@ -95,12 +96,15 @@ func SendToBedrock(prompt string) string {
 		return "Bedrock says what?!?"
 	}
 
+	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+	s.Start()
 	resp, err := svc.InvokeModel(context.TODO(), &bedrockruntime.InvokeModelInput{
 		Accept:      &accept,
 		ModelId:     &modelId,
 		ContentType: &contentType,
 		Body:        []byte(string(payloadBody)),
 	})
+	s.Stop()
 
 	if err != nil {
 		log.Printf("error from Bedrock, %v", err)
