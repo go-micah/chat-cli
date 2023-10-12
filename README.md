@@ -7,7 +7,7 @@ A little terminal based program that talks to the Amazon Bedrock API.
 ## Prerequisites
 
 1. You will need an AWS account.
-2. You will need to enable Cloud v2 in Amazon Bedrock
+2. You will need to enable Cloude v2 in Amazon Bedrock
 3. You will need to run `aws config` from the command line to set up your default profile
 
 ## Compile
