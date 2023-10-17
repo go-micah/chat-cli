@@ -15,6 +15,11 @@ import (
 	"github.com/briandowns/spinner"
 )
 
+// Response is a struct that represents the response from Bedrock
+type Response struct {
+	Completion string
+}
+
 // PayloadBody is a struct that represents the payload body for the post request to Bedrock
 type PayloadBody struct {
 	Prompt            string   `json:"prompt"`
@@ -28,6 +33,7 @@ type PayloadBody struct {
 
 // LoadFromFile is a function that loads a chat transcript from a text file
 func LoadFromFile() string {
+
 	t := time.Now()
 	filename := "chats/" + t.Format("2006-01-02") + ".txt"
 	file, err := os.Open(filename)
@@ -50,6 +56,7 @@ func LoadFromFile() string {
 
 // SaveToFile is a function that saves a chat transcript to a text file
 func SaveToFile(transcript string) {
+
 	_ = os.Mkdir("chats", os.ModePerm)
 	t := time.Now()
 	filename := "chats/" + t.Format("2006-01-02") + ".txt"
@@ -138,14 +145,17 @@ func main() {
 	// initial prompt
 	fmt.Printf("Hi there. You can ask me stuff!\n")
 
-	// stores full conversation
+	// stores the full conversation
 	var conversation string
 
 	// tty-loop
 	for {
+		// gets user input
 		prompt := StringPrompt(">")
 
 		// check for special words
+
+		// quit the program
 		if prompt == "quit\n" {
 			os.Exit(0)
 		}
@@ -177,13 +187,10 @@ func main() {
 		resp, err := SendToBedrock(conversation)
 		if err != nil {
 			fmt.Printf("%s\n", err)
-
 		}
+
 		stream := resp.GetStream().Reader
 
-		type Response struct {
-			Completion string
-		}
 		var response Response
 
 		chunks := ""
@@ -198,6 +205,7 @@ func main() {
 					err = json.Unmarshal([]byte(v.Value.Bytes), &response)
 					if err != nil {
 						log.Printf("unable to decode response:, %v", err)
+						continue
 					}
 					fmt.Printf("%v", response.Completion)
 					chunks = chunks + response.Completion
