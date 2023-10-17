@@ -11,6 +11,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
+	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime/types"
 	"github.com/briandowns/spinner"
 )
 
@@ -66,7 +67,7 @@ func SaveToFile(transcript string) {
 }
 
 // SendToBedrock is a function that sends a post request to Bedrock and returns the response
-func SendToBedrock(prompt string) string {
+func SendToBedrock(prompt string) (*bedrockruntime.InvokeModelWithResponseStreamOutput, error) {
 
 	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("us-east-1"))
 	if err != nil {
@@ -93,12 +94,12 @@ func SendToBedrock(prompt string) string {
 	payloadBody, err := json.Marshal(body)
 	if err != nil {
 		log.Printf("unable to read prompt:, %v", err)
-		return "Bedrock says what?!?"
+		return nil, err
 	}
 
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 	s.Start()
-	resp, err := svc.InvokeModel(context.TODO(), &bedrockruntime.InvokeModelInput{
+	resp, err := svc.InvokeModelWithResponseStream(context.TODO(), &bedrockruntime.InvokeModelWithResponseStreamInput{
 		Accept:      &accept,
 		ModelId:     &modelId,
 		ContentType: &contentType,
@@ -108,21 +109,10 @@ func SendToBedrock(prompt string) string {
 
 	if err != nil {
 		log.Printf("error from Bedrock, %v", err)
-		return "Bedrock says what?!?"
+		return nil, err
 	}
 
-	type Response struct {
-		Completion string
-	}
-	var response Response
-
-	err = json.Unmarshal([]byte(resp.Body), &response)
-	if err != nil {
-		log.Printf("unable to decode response:, %v", err)
-		return "Bedrock says what?!?"
-	}
-
-	return response.Completion
+	return resp, err
 
 }
 
@@ -184,9 +174,46 @@ func main() {
 		}
 
 		conversation = conversation + " \\n\\nHuman: " + prompt
-		resp := SendToBedrock(conversation)
-		fmt.Printf("%s\n", resp)
-		conversation = conversation + " \\n\\nAssistant: " + resp
+		resp, err := SendToBedrock(conversation)
+		if err != nil {
+			fmt.Printf("%s\n", err)
+
+		}
+		stream := resp.GetStream().Reader
+
+		type Response struct {
+			Completion string
+		}
+		var response Response
+
+		chunks := ""
+
+		// streaming response loop
+		for {
+			events := stream.Events()
+			event := <-events
+			if event != nil {
+				if v, ok := event.(*types.ResponseStreamMemberChunk); ok {
+					// v has fields
+					err = json.Unmarshal([]byte(v.Value.Bytes), &response)
+					if err != nil {
+						log.Printf("unable to decode response:, %v", err)
+					}
+					fmt.Printf("%v", response.Completion)
+					chunks = chunks + response.Completion
+				} else if v, ok := event.(*types.UnknownUnionMember); ok {
+					// catchall
+					fmt.Print(v.Value)
+				}
+			} else {
+				break
+			}
+		}
+		stream.Close()
+
+		fmt.Print("\n")
+
+		conversation = conversation + " \\n\\nAssistant: " + chunks
 	}
 
 }
