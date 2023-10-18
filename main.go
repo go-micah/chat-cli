@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -31,15 +32,37 @@ type PayloadBody struct {
 	AnthropicVersion  string   `json:"anthropic_version"`
 }
 
-// LoadFromFile is a function that loads a chat transcript from a text file
-func LoadFromFile() string {
-
-	t := time.Now()
-	filename := "chats/" + t.Format("2006-01-02") + ".txt"
+// LoadDcoumentFromFile is a function that loads a document from a text file
+func LoadDocumentFromFile(filename string) (string, error) {
 	file, err := os.Open(filename)
 	if err != nil {
-		log.Printf("unable to open file, %v", err)
-		return "Bedrock says what?!?"
+		return "", fmt.Errorf("unable to open file, %v", err)
+	}
+	defer file.Close()
+	reader := bufio.NewReader(file)
+	var document string
+
+	document += " \\n\\nHuman: Here is the document, inside <document></document> XML tags.\n\n"
+	document += "<document>\n"
+
+	for {
+		line, err := reader.ReadString('\n')
+		document += line + "\n"
+		if err != nil {
+			break
+		}
+	}
+
+	document += "</document>\n"
+	return document, nil
+}
+
+// LoadFromFile is a function that loads a chat transcript from a text file
+func LoadFromFile(filename string) (string, error) {
+
+	file, err := os.Open(filename)
+	if err != nil {
+		return "", fmt.Errorf("unable to open file, %v", err)
 	}
 	defer file.Close()
 	reader := bufio.NewReader(file)
@@ -51,30 +74,29 @@ func LoadFromFile() string {
 			break
 		}
 	}
-	return transcript
+	return transcript, nil
 }
 
 // SaveToFile is a function that saves a chat transcript to a text file
-func SaveToFile(transcript string) {
-
-	_ = os.Mkdir("chats", os.ModePerm)
-	t := time.Now()
-	filename := "chats/" + t.Format("2006-01-02") + ".txt"
+func SaveToFile(transcript string, filename string) error {
 
 	file, err := os.Create(filename)
 	if err != nil {
-		log.Printf("unable to create file, %v", err)
-		return
+		return fmt.Errorf("unable to create file, %v", err)
 	}
 	defer file.Close()
 	writer := bufio.NewWriter(file)
 	writer.WriteString(transcript)
 	writer.Flush()
-	log.Printf("chat transcript saved to file")
+	return nil
 }
 
 // SendToBedrock is a function that sends a post request to Bedrock and returns the response
-func SendToBedrock(prompt string) (*bedrockruntime.InvokeModelWithResponseStreamOutput, error) {
+func SendToBedrock(prompt string, document string) (*bedrockruntime.InvokeModelWithResponseStreamOutput, error) {
+
+	if document != "" {
+		prompt = document + prompt
+	}
 
 	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("us-east-1"))
 	if err != nil {
@@ -89,7 +111,7 @@ func SendToBedrock(prompt string) (*bedrockruntime.InvokeModelWithResponseStream
 
 	var body PayloadBody
 	body.Prompt = "Human: \n\nHuman: " + prompt + "\n\nAssistant:"
-	body.MaxTokensToSample = 300
+	body.MaxTokensToSample = 500
 	body.Temperature = 1
 	body.TopK = 250
 	body.TopP = 0.999
@@ -100,8 +122,7 @@ func SendToBedrock(prompt string) (*bedrockruntime.InvokeModelWithResponseStream
 
 	payloadBody, err := json.Marshal(body)
 	if err != nil {
-		log.Printf("unable to read prompt:, %v", err)
-		return nil, err
+		log.Fatalf("unable to read prompt:, %v", err)
 	}
 
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
@@ -112,15 +133,13 @@ func SendToBedrock(prompt string) (*bedrockruntime.InvokeModelWithResponseStream
 		ContentType: &contentType,
 		Body:        []byte(string(payloadBody)),
 	})
-	s.Stop()
-
 	if err != nil {
-		log.Printf("error from Bedrock, %v", err)
+		//log.Printf("error from Bedrock, %s", err.Error())
 		return nil, err
 	}
+	s.Stop()
 
-	return resp, err
-
+	return resp, nil
 }
 
 // StringPrompt is a function that asks for a string value using the label
@@ -142,11 +161,25 @@ func StringPrompt(label string) string {
 
 func main() {
 
-	// initial prompt
-	fmt.Printf("Hi there. You can ask me stuff!\n")
-
 	// stores the full conversation
 	var conversation string
+	var document string
+	var err error
+
+	filenameFlag := flag.String("filename", "", "loads a text file by passing its filename here")
+
+	flag.Parse()
+
+	if *filenameFlag != "" {
+		document, err = LoadDocumentFromFile(*filenameFlag)
+		if err != nil {
+			log.Fatalf("error: %v", err)
+		}
+		fmt.Print(document)
+	}
+
+	// initial prompt
+	fmt.Printf("Hi there. You can ask me stuff!\n")
 
 	// tty-loop
 	for {
@@ -163,14 +196,26 @@ func main() {
 		// saves chat transcript to file
 		if prompt == "save\n" {
 			prompt = ""
-			SaveToFile(conversation)
+			_ = os.Mkdir("chats", os.ModePerm)
+			t := time.Now()
+			filename := "chats/" + t.Format("2006-01-02") + ".txt"
+			err := SaveToFile(conversation, filename)
+			if err != nil {
+				log.Fatalf("error: %v", err)
+			}
+			fmt.Printf("chat transcript saved to file\n")
 			continue
 		}
 
 		// loads chat transcript from file
 		if prompt == "load\n" {
 			prompt = ""
-			conversation = LoadFromFile()
+			t := time.Now()
+			filename := "chats/" + t.Format("2006-01-02") + ".txt"
+			conversation, err := LoadFromFile(filename)
+			if err != nil {
+				log.Fatalf("error: %v", err)
+			}
 			fmt.Print(conversation)
 			continue
 		}
@@ -184,12 +229,13 @@ func main() {
 		}
 
 		conversation = conversation + " \\n\\nHuman: " + prompt
-		resp, err := SendToBedrock(conversation)
+		resp, err := SendToBedrock(conversation, document)
 		if err != nil {
-			fmt.Printf("%s\n", err)
+			log.Fatalf("error: %v", err)
 		}
 
 		stream := resp.GetStream().Reader
+		events := stream.Events()
 
 		var response Response
 
@@ -197,12 +243,11 @@ func main() {
 
 		// streaming response loop
 		for {
-			events := stream.Events()
 			event := <-events
 			if event != nil {
 				if v, ok := event.(*types.ResponseStreamMemberChunk); ok {
 					// v has fields
-					err = json.Unmarshal([]byte(v.Value.Bytes), &response)
+					err := json.Unmarshal([]byte(v.Value.Bytes), &response)
 					if err != nil {
 						log.Printf("unable to decode response:, %v", err)
 						continue
@@ -223,5 +268,4 @@ func main() {
 
 		conversation = conversation + " \\n\\nAssistant: " + chunks
 	}
-
 }
