@@ -100,7 +100,7 @@ func SendToBedrock(prompt string, document string) (*bedrockruntime.InvokeModelW
 
 	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("us-east-1"))
 	if err != nil {
-		log.Fatalf("unable to load AWS SDK config, %v", err)
+		return nil, fmt.Errorf("unable to load AWS SDK config, %v", err)
 	}
 
 	svc := bedrockruntime.NewFromConfig(cfg)
@@ -122,7 +122,7 @@ func SendToBedrock(prompt string, document string) (*bedrockruntime.InvokeModelW
 
 	payloadBody, err := json.Marshal(body)
 	if err != nil {
-		log.Fatalf("unable to read prompt:, %v", err)
+		return nil, fmt.Errorf("unable to marshal payload body, %v", err)
 	}
 
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
@@ -134,8 +134,7 @@ func SendToBedrock(prompt string, document string) (*bedrockruntime.InvokeModelW
 		Body:        []byte(string(payloadBody)),
 	})
 	if err != nil {
-		//log.Printf("error from Bedrock, %s", err.Error())
-		return nil, err
+		return nil, fmt.Errorf("error from Bedrock, %v", err)
 	}
 	s.Stop()
 
