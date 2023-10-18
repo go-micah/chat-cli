@@ -263,6 +263,9 @@ func main() {
 		}
 		stream.Close()
 
+		if stream.Err() != nil {
+			log.Fatalf("error from Bedrock, %v", stream.Err())
+		}
 		fmt.Print("\n")
 
 		conversation = conversation + " \\n\\nAssistant: " + chunks
