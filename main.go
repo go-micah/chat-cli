@@ -21,6 +21,12 @@ type Response struct {
 	Completion string
 }
 
+// Options is a struct that represents feature flags given at the command line
+type Options struct {
+	Document string
+	Region   string
+}
+
 // PayloadBody is a struct that represents the payload body for the post request to Bedrock
 type PayloadBody struct {
 	Prompt            string   `json:"prompt"`
@@ -92,13 +98,13 @@ func SaveToFile(transcript string, filename string) error {
 }
 
 // SendToBedrock is a function that sends a post request to Bedrock and returns the response
-func SendToBedrock(prompt string, document string) (*bedrockruntime.InvokeModelWithResponseStreamOutput, error) {
+func SendToBedrock(prompt string, options Options) (*bedrockruntime.InvokeModelWithResponseStreamOutput, error) {
 
-	if document != "" {
-		prompt = document + prompt
+	if options.Document != "" {
+		prompt = options.Document + prompt
 	}
 
-	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("us-east-1"))
+	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(options.Region))
 	if err != nil {
 		return nil, fmt.Errorf("unable to load AWS SDK config, %v", err)
 	}
@@ -162,20 +168,23 @@ func main() {
 
 	// stores the full conversation
 	var conversation string
-	var document string
 	var err error
+	var options Options
 
 	filenameFlag := flag.String("filename", "", "loads a text file by passing its filename here")
+	regionFlag := flag.String("region", "us-east-1", "specifies the AWS region to use")
 
 	flag.Parse()
 
 	if *filenameFlag != "" {
-		document, err = LoadDocumentFromFile(*filenameFlag)
+		options.Document, err = LoadDocumentFromFile(*filenameFlag)
 		if err != nil {
 			log.Fatalf("error: %v", err)
 		}
-		fmt.Print(document)
+		fmt.Print(options.Document)
 	}
+
+	options.Region = *regionFlag
 
 	// initial prompt
 	fmt.Printf("Hi there. You can ask me stuff!\n")
@@ -228,7 +237,7 @@ func main() {
 		}
 
 		conversation = conversation + " \\n\\nHuman: " + prompt
-		resp, err := SendToBedrock(conversation, document)
+		resp, err := SendToBedrock(conversation, options)
 		if err != nil {
 			log.Fatalf("error: %v", err)
 		}
