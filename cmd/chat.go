@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime/types"
 	"github.com/go-micah/chat-cli/bedrock"
@@ -22,6 +23,7 @@ var chatCmd = &cobra.Command{
 	Long:  `Begin an interactive chat session with an LLM via Amazon Bedrock`,
 	Run: func(cmd *cobra.Command, args []string) {
 		var conversation string
+		var err error
 		var options bedrock.Options
 
 		// initial prompt
@@ -37,6 +39,33 @@ var chatCmd = &cobra.Command{
 			// quit the program
 			if prompt == "quit\n" {
 				os.Exit(0)
+			}
+
+			// saves chat transcript to file
+			if prompt == "save\n" {
+				prompt = ""
+				_ = os.Mkdir("chats", os.ModePerm)
+				t := time.Now()
+				filename := "chats/" + t.Format("2006-01-02") + ".txt"
+				err := bedrock.SaveTranscriptToFile(conversation, filename)
+				if err != nil {
+					log.Fatalf("error: %v", err)
+				}
+				fmt.Printf("chat transcript saved to file\n")
+				continue
+			}
+
+			// loads chat transcript from file
+			if prompt == "load\n" {
+				prompt = ""
+				t := time.Now()
+				filename := "chats/" + t.Format("2006-01-02") + ".txt"
+				conversation, err = bedrock.LoadTranscriptFromFile(filename)
+				if err != nil {
+					log.Fatalf("error: %v", err)
+				}
+				fmt.Print(conversation)
+				continue
 			}
 
 			// clears chat transcript from memory
