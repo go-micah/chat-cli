@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/bedrock"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
 	"github.com/briandowns/spinner"
 )
@@ -33,6 +34,24 @@ type PayloadBody struct {
 	TopP              float64  `json:"top_p"`
 	StopSequences     []string `json:"stop_sequences"`
 	AnthropicVersion  string   `json:"anthropic_version"`
+}
+
+// ListFoundationModels is a function that lists the foundation models available to Bedrock
+func ListFoundationModels(options Options) (*bedrock.ListFoundationModelsOutput, error) {
+
+	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(options.Region))
+	if err != nil {
+		return nil, fmt.Errorf("unable to load AWS SDK config, %v", err)
+	}
+
+	svc := bedrock.NewFromConfig(cfg)
+
+	resp, err := svc.ListFoundationModels(context.TODO(), &bedrock.ListFoundationModelsInput{})
+	if err != nil {
+		return nil, fmt.Errorf("error from Bedrock, %v", err)
+	}
+
+	return resp, nil
 }
 
 // SendToBedrock is a function that sends a post request to Bedrock and returns the response
