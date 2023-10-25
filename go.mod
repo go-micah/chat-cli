@@ -7,6 +7,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/bedrock v1.1.5
 	github.com/aws/aws-sdk-go-v2/service/bedrockruntime v1.1.2
 	github.com/briandowns/spinner v1.23.0
+	github.com/mattn/go-isatty v0.0.20
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.17.0
 )
@@ -30,7 +31,6 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
 	github.com/sagikazarmark/locafero v0.3.0 // indirect

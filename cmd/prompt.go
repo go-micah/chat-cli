@@ -6,10 +6,13 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
+	"os"
 
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime/types"
 	"github.com/go-micah/chat-cli/bedrock"
+	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 )
 
@@ -22,9 +25,22 @@ var promptCmd = &cobra.Command{
 > chat-cli prompt "What is your name?"`,
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		var options bedrock.Options
+		var document string
+
+		if isatty.IsTerminal(os.Stdin.Fd()) || isatty.IsCygwinTerminal(os.Stdin.Fd()) {
+			// do nothing
+		} else {
+			stdin, err := io.ReadAll(os.Stdin)
+
+			if err != nil {
+				panic(err)
+			}
+			document = string(stdin)
+			options.Document = document
+		}
 
 		prompt := args[0]
-		var options bedrock.Options
 
 		conversation := " \\n\\nHuman: " + prompt
 		resp, err := bedrock.SendToBedrock(conversation, options)
