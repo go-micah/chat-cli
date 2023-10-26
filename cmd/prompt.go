@@ -4,16 +4,15 @@ Copyright © 2023 Micah Walter
 package cmd
 
 import (
-	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"os"
+	"strings"
 
-	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime/types"
 	"github.com/go-micah/chat-cli/bedrock"
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // promptCmd represents the prompt command
@@ -42,46 +41,42 @@ var promptCmd = &cobra.Command{
 
 		prompt := args[0]
 
-		conversation := " \\n\\nHuman: " + prompt
-		resp, err := bedrock.SendToBedrock(conversation, options)
-		if err != nil {
-			log.Fatalf("error: %v", err)
+		model := viper.GetString("ModelID")
+		modelTLD := model[:strings.IndexByte(model, '.')]
+
+		if modelTLD == "anthropic" {
+			prompt = " \\n\\nHuman: " + prompt
 		}
 
-		stream := resp.GetStream().Reader
-		events := stream.Events()
+		stream := false
 
-		var response bedrock.Response
-
-		chunks := ""
-
-		// streaming response loop
-		for {
-			event := <-events
-			if event != nil {
-				if v, ok := event.(*types.ResponseStreamMemberChunk); ok {
-					// v has fields
-					err := json.Unmarshal([]byte(v.Value.Bytes), &response)
-					if err != nil {
-						log.Printf("unable to decode response:, %v", err)
-						continue
-					}
-					fmt.Printf("%v", response.Completion)
-					chunks = chunks + response.Completion
-				} else if v, ok := event.(*types.UnknownUnionMember); ok {
-					// catchall
-					fmt.Print(v.Value)
-				}
-			} else {
-				break
+		if stream {
+			resp, err := bedrock.SendToBedrockWithResponseStream(prompt, options)
+			if err != nil {
+				log.Fatalf("error: %v", err)
 			}
-		}
-		stream.Close()
 
-		if stream.Err() != nil {
-			log.Fatalf("error from Bedrock, %v", stream.Err())
+			_ = processStreamingResponse(*resp)
+		} else {
+			resp, err := bedrock.SendToBedrock(prompt, options)
+			if err != nil {
+				log.Fatalf("error: %v", err)
+			}
+
+			if modelTLD == "anthropic" {
+				_ = processAnthropicResponse(*resp)
+			}
+
+			if modelTLD == "ai21" {
+				_ = processAI21Response(*resp)
+			}
+
+			if modelTLD == "cohere" {
+				_ = processCohereResponse(*resp)
+			}
+
 		}
-		fmt.Print("\n")
+
 	},
 }
 
@@ -96,6 +91,5 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// promptCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
 }

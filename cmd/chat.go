@@ -4,14 +4,11 @@ Copyright © 2023 Micah Walter
 package cmd
 
 import (
-	"bufio"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime/types"
 	"github.com/go-micah/chat-cli/bedrock"
 	"github.com/spf13/cobra"
 )
@@ -32,7 +29,7 @@ var chatCmd = &cobra.Command{
 		// tty-loop
 		for {
 			// gets user input
-			prompt := StringPrompt(">")
+			prompt := stringPrompt(">")
 
 			// check for special words
 
@@ -77,66 +74,15 @@ var chatCmd = &cobra.Command{
 			}
 
 			conversation = conversation + " \\n\\nHuman: " + prompt
-			resp, err := bedrock.SendToBedrock(conversation, options)
+			resp, err := bedrock.SendToBedrockWithResponseStream(conversation, options)
 			if err != nil {
 				log.Fatalf("error: %v", err)
 			}
 
-			stream := resp.GetStream().Reader
-			events := stream.Events()
-
-			var response bedrock.Response
-
-			chunks := ""
-
-			// streaming response loop
-			for {
-				event := <-events
-				if event != nil {
-					if v, ok := event.(*types.ResponseStreamMemberChunk); ok {
-						// v has fields
-						err := json.Unmarshal([]byte(v.Value.Bytes), &response)
-						if err != nil {
-							log.Printf("unable to decode response:, %v", err)
-							continue
-						}
-						fmt.Printf("%v", response.Completion)
-						chunks = chunks + response.Completion
-					} else if v, ok := event.(*types.UnknownUnionMember); ok {
-						// catchall
-						fmt.Print(v.Value)
-					}
-				} else {
-					break
-				}
-			}
-			stream.Close()
-
-			if stream.Err() != nil {
-				log.Fatalf("error from Bedrock, %v", stream.Err())
-			}
-			fmt.Print("\n")
-
+			chunks := processStreamingResponse(*resp)
 			conversation = conversation + " \\n\\nAssistant: " + chunks
 		}
 	},
-}
-
-// StringPrompt is a function that asks for a string value using the label
-func StringPrompt(label string) string {
-
-	var s string
-	r := bufio.NewReader(os.Stdin)
-
-	for {
-		fmt.Fprint(os.Stderr, label+" ")
-		s, _ = r.ReadString('\n')
-		if s != "" {
-			break
-		}
-	}
-
-	return s
 }
 
 func init() {

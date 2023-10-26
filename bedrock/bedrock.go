@@ -23,7 +23,23 @@ type Options struct {
 }
 
 // Response is a struct that represents the response from Bedrock
-type Response struct {
+type AnthropicResponse struct {
+	Completion string
+}
+
+// CohereResponse is a struct that represents the response from Cohere
+type CohereResponse struct {
+	Generations []CohereResponseGeneration `json:"generations"`
+}
+
+// CohereResponseGeneration is a struct that represents a generation from Cohere
+type CohereResponseGeneration struct {
+	ID   string `json:"id"`
+	Text string `json:"text"`
+}
+
+// CohereResponse is a struct that represents the response from Cohere
+type AI21Response struct {
 	Completion string
 }
 
@@ -119,7 +135,7 @@ func SerializePayload(prompt string) ([]byte, error) {
 			`""`,
 		}
 		body.ReturnLiklihoods = "NONE"
-		body.Stream = true
+		body.Stream = false
 
 		payloadBody, err := json.Marshal(body)
 		if err != nil {
@@ -151,8 +167,8 @@ func ListFoundationModels(options Options) (*bedrock.ListFoundationModelsOutput,
 	return resp, nil
 }
 
-// SendToBedrock is a function that sends a post request to Bedrock and returns the response
-func SendToBedrock(prompt string, options Options) (*bedrockruntime.InvokeModelWithResponseStreamOutput, error) {
+// SendToBedrockWithResponseStream is a function that sends a post request to Bedrock and returns the streaming response
+func SendToBedrockWithResponseStream(prompt string, options Options) (*bedrockruntime.InvokeModelWithResponseStreamOutput, error) {
 
 	if options.Document != "" {
 		prompt = options.Document + prompt
@@ -177,6 +193,45 @@ func SendToBedrock(prompt string, options Options) (*bedrockruntime.InvokeModelW
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 	s.Start()
 	resp, err := svc.InvokeModelWithResponseStream(context.TODO(), &bedrockruntime.InvokeModelWithResponseStreamInput{
+		Accept:      &accept,
+		ModelId:     &modelId,
+		ContentType: &contentType,
+		Body:        []byte(string(payloadBody)),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error from Bedrock, %v", err)
+	}
+	s.Stop()
+
+	return resp, nil
+}
+
+// SendToBedrock is a function that sends a post request to Bedrock and returns the response
+func SendToBedrock(prompt string, options Options) (*bedrockruntime.InvokeModelOutput, error) {
+
+	if options.Document != "" {
+		prompt = options.Document + prompt
+	}
+
+	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(options.Region))
+	if err != nil {
+		return nil, fmt.Errorf("unable to load AWS SDK config, %v", err)
+	}
+
+	svc := bedrockruntime.NewFromConfig(cfg)
+
+	accept := "*/*"
+	modelId := viper.GetString("ModelID")
+	contentType := "application/json"
+
+	payloadBody, err := SerializePayload(prompt)
+	if err != nil {
+		return nil, fmt.Errorf("unable to serialize payload body, %v", err)
+	}
+
+	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+	s.Start()
+	resp, err := svc.InvokeModel(context.TODO(), &bedrockruntime.InvokeModelInput{
 		Accept:      &accept,
 		ModelId:     &modelId,
 		ContentType: &contentType,
