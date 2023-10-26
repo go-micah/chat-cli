@@ -42,6 +42,9 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.chat-cli.yaml)")
 
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "model-id", "anthropic.claude-v2", "LLM Model ID to use")
+	viper.BindPFlag("ModelID", rootCmd.PersistentFlags().Lookup("model-id"))
+
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
@@ -49,6 +52,9 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
+
+	viper.SetDefault("ModelID", "anthropic.claude-v2")
+
 	if cfgFile != "" {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)

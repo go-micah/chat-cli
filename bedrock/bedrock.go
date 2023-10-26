@@ -6,12 +6,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/bedrock"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
 	"github.com/briandowns/spinner"
+	"github.com/spf13/viper"
 )
 
 // Options is a struct that represents feature flags given at the command line
@@ -26,14 +28,109 @@ type Response struct {
 }
 
 // PayloadBody is a struct that represents the payload body for the post request to Bedrock
-type PayloadBody struct {
+type AnthropicPayloadBody struct {
 	Prompt            string   `json:"prompt"`
 	MaxTokensToSample int      `json:"max_tokens_to_sample"`
 	Temperature       float64  `json:"temperature"`
 	TopK              int      `json:"top_k"`
 	TopP              float64  `json:"top_p"`
 	StopSequences     []string `json:"stop_sequences"`
-	AnthropicVersion  string   `json:"anthropic_version"`
+}
+
+// A121PayloadBody is a struct that represents the payload body for the post request to Bedrock
+type AI21PayloadBody struct {
+	Prompt            string   `json:"prompt"`
+	Temperature       float64  `json:"temperature"`
+	TopP              float64  `json:"topP"`
+	MaxTokensToSample int      `json:"maxTokens"`
+	StopSequences     []string `json:"stopSequences"`
+}
+
+// CoherePayloadBody is a struct that represents the payload body for the post request to Bedrock
+type CoherePayloadBody struct {
+	Prompt            string   `json:"prompt"`
+	Temperature       float64  `json:"temperature"`
+	P                 float64  `json:"p"`
+	K                 float64  `json:"k"`
+	MaxTokensToSample int      `json:"max_tokens"`
+	StopSequences     []string `json:"stop_sequences"`
+	ReturnLiklihoods  string   `json:"return_likelihoods"`
+	Stream            bool     `json:"stream"`
+	// Generations       int      `json:"num_generations"`
+}
+
+// SerializePayload is a function that serializes the payload body before sending to Bedrock
+func SerializePayload(prompt string) ([]byte, error) {
+
+	model := viper.GetString("ModelID")
+	modelTLD := model[:strings.IndexByte(model, '.')]
+
+	// if config says anthropic, use AnthropicPayloadBody
+	if modelTLD == "anthropic" {
+
+		var body AnthropicPayloadBody
+		body.Prompt = "Human: \n\nHuman: " + prompt + "\n\nAssistant:"
+		body.MaxTokensToSample = 500
+		body.Temperature = 1
+		body.TopK = 250
+		body.TopP = 0.999
+		body.StopSequences = []string{
+			`"\n\nHuman:\"`,
+		}
+
+		payloadBody, err := json.Marshal(body)
+		if err != nil {
+			return nil, fmt.Errorf("unable to marshal payload body, %v", err)
+		}
+
+		return payloadBody, nil
+	}
+
+	// if config says ai21, use AI21PayloadBody
+	if modelTLD == "ai21" {
+
+		var body AI21PayloadBody
+		body.Prompt = prompt
+		body.Temperature = 1
+		body.TopP = 0.999
+		body.MaxTokensToSample = 500
+		body.StopSequences = []string{
+			`""`,
+		}
+
+		payloadBody, err := json.Marshal(body)
+		if err != nil {
+			return nil, fmt.Errorf("unable to marshal payload body, %v", err)
+		}
+
+		return payloadBody, nil
+	}
+
+	// if config says cohere, use CoherePayloadBody
+	if modelTLD == "cohere" {
+
+		var body CoherePayloadBody
+		body.Prompt = prompt
+		body.Temperature = 0.75
+		body.P = 0.01
+		body.K = 0
+		body.MaxTokensToSample = 400
+		body.StopSequences = []string{
+			`""`,
+		}
+		body.ReturnLiklihoods = "NONE"
+		body.Stream = true
+
+		payloadBody, err := json.Marshal(body)
+		if err != nil {
+			return nil, fmt.Errorf("unable to marshal payload body, %v", err)
+		}
+
+		return payloadBody, nil
+	}
+
+	return nil, fmt.Errorf("invalid model, %v", viper.GetString("ModelID"))
+
 }
 
 // ListFoundationModels is a function that lists the foundation models available to Bedrock
@@ -69,23 +166,12 @@ func SendToBedrock(prompt string, options Options) (*bedrockruntime.InvokeModelW
 	svc := bedrockruntime.NewFromConfig(cfg)
 
 	accept := "*/*"
-	modelId := "anthropic.claude-v2"
+	modelId := viper.GetString("ModelID")
 	contentType := "application/json"
 
-	var body PayloadBody
-	body.Prompt = "Human: \n\nHuman: " + prompt + "\n\nAssistant:"
-	body.MaxTokensToSample = 500
-	body.Temperature = 1
-	body.TopK = 250
-	body.TopP = 0.999
-	body.StopSequences = []string{
-		`"\n\nHuman:\"`,
-	}
-	body.AnthropicVersion = "bedrock-2023-05-31"
-
-	payloadBody, err := json.Marshal(body)
+	payloadBody, err := SerializePayload(prompt)
 	if err != nil {
-		return nil, fmt.Errorf("unable to marshal payload body, %v", err)
+		return nil, fmt.Errorf("unable to serialize payload body, %v", err)
 	}
 
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
