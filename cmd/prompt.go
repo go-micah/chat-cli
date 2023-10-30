@@ -48,9 +48,12 @@ var promptCmd = &cobra.Command{
 			prompt = " \\n\\nHuman: " + prompt
 		}
 
-		stream := false
+		stream := viper.GetBool("Stream")
 
 		if stream {
+			if modelTLD != "anthropic" {
+				log.Fatal("the model you are using does not yet support streaming")
+			}
 			resp, err := bedrock.SendToBedrockWithResponseStream(prompt, options)
 			if err != nil {
 				log.Fatalf("error: %v", err)
@@ -73,6 +76,10 @@ var promptCmd = &cobra.Command{
 
 			if modelTLD == "cohere" {
 				_ = processCohereResponse(*resp)
+			}
+
+			if modelTLD == "stability" {
+				processStabilityResponse(*resp)
 			}
 
 		}

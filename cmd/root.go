@@ -45,9 +45,9 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "model-id", "anthropic.claude-v2", "LLM Model ID to use")
 	viper.BindPFlag("ModelID", rootCmd.PersistentFlags().Lookup("model-id"))
 
-	// var stream bool
-	// rootCmd.PersistentFlags().BoolVarP(&stream, "stream", "s", true, "Use the streaming API")
-	// viper.BindPFlag("Stream", rootCmd.PersistentFlags().Lookup("stream"))
+	var stream bool
+	rootCmd.PersistentFlags().BoolVarP(&stream, "stream", "s", false, "Use the streaming API")
+	viper.BindPFlag("Stream", rootCmd.PersistentFlags().Lookup("stream"))
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.

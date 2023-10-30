@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime/types"
@@ -49,6 +50,32 @@ func processCohereResponse(resp bedrockruntime.InvokeModelOutput) string {
 	}
 	fmt.Print(response.Generations[0].Text)
 	return response.Generations[0].Text
+}
+
+func processStabilityResponse(resp bedrockruntime.InvokeModelOutput) {
+	var response bedrock.StabilityResponse
+
+	err := json.Unmarshal(resp.Body, &response)
+
+	if err != nil {
+		log.Fatal("failed to unmarshal", err)
+	}
+
+	decoded, err := response.Artifacts[0].DecodeImage()
+
+	if err != nil {
+		log.Fatal("failed to decode base64 response", err)
+
+	}
+
+	outputFile := fmt.Sprintf("output/output-%d.jpg", time.Now().Unix())
+
+	err = os.WriteFile(outputFile, decoded, 0644)
+	if err != nil {
+		fmt.Println("error writing to file:", err)
+	}
+
+	log.Println("image written to file", outputFile)
 }
 
 // processStreamingResponse is a function that takes a streaming response and prints the stream
