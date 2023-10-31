@@ -9,6 +9,7 @@ A little terminal based program that talks to the Amazon Bedrock API. This is ve
 1. You will need an AWS account.
 2. You will need to enable the LLMs you wish to use in Amazon Bedrock
 3. You will need to run `aws config` from the command line to set up your default profile
+4. You will need Go installed on your system
 
 ## Compile
 
