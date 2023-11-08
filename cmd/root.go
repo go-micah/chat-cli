@@ -58,6 +58,7 @@ func init() {
 func initConfig() {
 
 	viper.SetDefault("ModelID", "anthropic.claude-v2")
+	viper.SetDefault("MaxTokensToSample", 500)
 
 	if cfgFile != "" {
 		// Use config file from the flag.

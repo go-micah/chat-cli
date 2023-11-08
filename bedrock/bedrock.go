@@ -121,7 +121,7 @@ func SerializePayload(prompt string) ([]byte, error) {
 
 		var body AnthropicPayloadBody
 		body.Prompt = "Human: \n\nHuman: " + prompt + "\n\nAssistant:"
-		body.MaxTokensToSample = 500
+		body.MaxTokensToSample = viper.GetInt("MaxTokensToSample")
 		body.Temperature = 1
 		body.TopK = 250
 		body.TopP = 0.999
@@ -144,7 +144,7 @@ func SerializePayload(prompt string) ([]byte, error) {
 		body.Prompt = prompt
 		body.Temperature = 1
 		body.TopP = 0.999
-		body.MaxTokensToSample = 500
+		body.MaxTokensToSample = viper.GetInt("MaxTokensToSample")
 		body.StopSequences = []string{
 			`""`,
 		}
@@ -165,7 +165,7 @@ func SerializePayload(prompt string) ([]byte, error) {
 		body.Temperature = 0.75
 		body.P = 0.01
 		body.K = 0
-		body.MaxTokensToSample = 400
+		body.MaxTokensToSample = viper.GetInt("MaxTokensToSample")
 		body.StopSequences = []string{
 			`""`,
 		}
