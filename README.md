@@ -16,8 +16,10 @@ A little terminal based program that talks to the Amazon Bedrock API. This is ve
     $ make
 
 ## Run
+![](/images/help.png)
 
     $ ./bin/chat-cli <command> <args> <flags>
+
 
 ## Help
 
