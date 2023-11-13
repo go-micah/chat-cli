@@ -22,6 +22,12 @@ type Options struct {
 	Region            string
 	ModelID           string
 	MaxTokensToSample int
+	TopP              float64
+	TopK              int
+	Temperature       float64
+	StopSequences     []string
+	ReturnLiklihoods  string
+	Stream            bool
 }
 
 // AnthropicResponse is a struct that represents the response from Bedrock
@@ -123,12 +129,10 @@ func SerializePayload(prompt string, options Options) ([]byte, error) {
 		var body AnthropicPayloadBody
 		body.Prompt = "Human: \n\nHuman: " + prompt + "\n\nAssistant:"
 		body.MaxTokensToSample = options.MaxTokensToSample
-		body.Temperature = 1
-		body.TopK = 250
-		body.TopP = 0.999
-		body.StopSequences = []string{
-			`"\n\nHuman:\"`,
-		}
+		body.Temperature = options.Temperature
+		body.TopK = options.TopK
+		body.TopP = options.TopP
+		body.StopSequences = options.StopSequences
 
 		payloadBody, err := json.Marshal(body)
 		if err != nil {
@@ -143,12 +147,10 @@ func SerializePayload(prompt string, options Options) ([]byte, error) {
 
 		var body AI21PayloadBody
 		body.Prompt = prompt
-		body.Temperature = 1
-		body.TopP = 0.999
+		body.Temperature = options.Temperature
+		body.TopP = options.TopP
 		body.MaxTokensToSample = options.MaxTokensToSample
-		body.StopSequences = []string{
-			`""`,
-		}
+		body.StopSequences = options.StopSequences
 
 		payloadBody, err := json.Marshal(body)
 		if err != nil {
@@ -163,15 +165,13 @@ func SerializePayload(prompt string, options Options) ([]byte, error) {
 
 		var body CoherePayloadBody
 		body.Prompt = prompt
-		body.Temperature = 0.75
-		body.TopP = 0.01
-		body.TopK = 0
+		body.Temperature = options.Temperature
+		body.TopP = options.TopP
+		body.TopK = float64(options.TopK)
 		body.MaxTokensToSample = options.MaxTokensToSample
-		body.StopSequences = []string{
-			`""`,
-		}
-		body.ReturnLiklihoods = "NONE"
-		body.Stream = false
+		body.StopSequences = options.StopSequences
+		body.ReturnLiklihoods = options.ReturnLiklihoods
+		body.Stream = options.Stream
 
 		payloadBody, err := json.Marshal(body)
 		if err != nil {

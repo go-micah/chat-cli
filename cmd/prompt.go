@@ -25,7 +25,17 @@ var promptCmd = &cobra.Command{
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		var options bedrock.Options
-		options.Region = viper.GetString("region")
+		options.Region = viper.GetString("Region")
+		options.ModelID = viper.GetString("ModelId")
+
+		options.TopP = viper.GetFloat64("TopP")
+		options.TopK = viper.GetInt("TopK")
+		options.Temperature = viper.GetFloat64("Temperature")
+		options.MaxTokensToSample = viper.GetInt("MaxTokensToSample")
+
+		options.StopSequences = []string{
+			``,
+		}
 
 		var document string
 
@@ -43,14 +53,14 @@ var promptCmd = &cobra.Command{
 
 		prompt := args[0]
 
-		model := viper.GetString("ModelID")
+		model := options.ModelID
 		modelTLD := model[:strings.IndexByte(model, '.')]
-
-		options.ModelID = model
-		options.MaxTokensToSample = viper.GetInt("MaxTokensToSample")
 
 		if modelTLD == "anthropic" {
 			prompt = " \\n\\nHuman: " + prompt
+			options.StopSequences = []string{
+				`"\n\nHuman:\"`,
+			}
 		}
 
 		stream := viper.GetBool("Stream")
