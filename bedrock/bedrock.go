@@ -14,13 +14,14 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/bedrock"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
 	"github.com/briandowns/spinner"
-	"github.com/spf13/viper"
 )
 
 // Options is a struct that represents feature flags given at the command line
 type Options struct {
-	Document string
-	Region   string
+	Document          string
+	Region            string
+	ModelID           string
+	MaxTokensToSample int
 }
 
 // AnthropicResponse is a struct that represents the response from Bedrock
@@ -88,8 +89,8 @@ type AI21PayloadBody struct {
 type CoherePayloadBody struct {
 	Prompt            string   `json:"prompt"`
 	Temperature       float64  `json:"temperature"`
-	P                 float64  `json:"p"`
-	K                 float64  `json:"k"`
+	TopP              float64  `json:"p"`
+	TopK              float64  `json:"k"`
 	MaxTokensToSample int      `json:"max_tokens"`
 	StopSequences     []string `json:"stop_sequences"`
 	ReturnLiklihoods  string   `json:"return_likelihoods"`
@@ -111,9 +112,9 @@ type StabilityPayloadBody struct {
 }
 
 // SerializePayload is a function that serializes the payload body before sending to Bedrock
-func SerializePayload(prompt string) ([]byte, error) {
+func SerializePayload(prompt string, options Options) ([]byte, error) {
 
-	model := viper.GetString("ModelID")
+	model := options.ModelID
 	modelTLD := model[:strings.IndexByte(model, '.')]
 
 	// if config says anthropic, use AnthropicPayloadBody
@@ -121,7 +122,7 @@ func SerializePayload(prompt string) ([]byte, error) {
 
 		var body AnthropicPayloadBody
 		body.Prompt = "Human: \n\nHuman: " + prompt + "\n\nAssistant:"
-		body.MaxTokensToSample = viper.GetInt("MaxTokensToSample")
+		body.MaxTokensToSample = options.MaxTokensToSample
 		body.Temperature = 1
 		body.TopK = 250
 		body.TopP = 0.999
@@ -144,7 +145,7 @@ func SerializePayload(prompt string) ([]byte, error) {
 		body.Prompt = prompt
 		body.Temperature = 1
 		body.TopP = 0.999
-		body.MaxTokensToSample = viper.GetInt("MaxTokensToSample")
+		body.MaxTokensToSample = options.MaxTokensToSample
 		body.StopSequences = []string{
 			`""`,
 		}
@@ -163,9 +164,9 @@ func SerializePayload(prompt string) ([]byte, error) {
 		var body CoherePayloadBody
 		body.Prompt = prompt
 		body.Temperature = 0.75
-		body.P = 0.01
-		body.K = 0
-		body.MaxTokensToSample = viper.GetInt("MaxTokensToSample")
+		body.TopP = 0.01
+		body.TopK = 0
+		body.MaxTokensToSample = options.MaxTokensToSample
 		body.StopSequences = []string{
 			`""`,
 		}
@@ -200,7 +201,7 @@ func SerializePayload(prompt string) ([]byte, error) {
 		return payloadBody, nil
 	}
 
-	return nil, fmt.Errorf("invalid model, %v", viper.GetString("ModelID"))
+	return nil, fmt.Errorf("invalid model, %v", options.ModelID)
 
 }
 
@@ -237,10 +238,10 @@ func SendToBedrockWithResponseStream(prompt string, options Options) (*bedrockru
 	svc := bedrockruntime.NewFromConfig(cfg)
 
 	accept := "*/*"
-	modelId := viper.GetString("ModelID")
+	modelId := options.ModelID
 	contentType := "application/json"
 
-	payloadBody, err := SerializePayload(prompt)
+	payloadBody, err := SerializePayload(prompt, options)
 	if err != nil {
 		return nil, fmt.Errorf("unable to serialize payload body, %v", err)
 	}
@@ -276,10 +277,10 @@ func SendToBedrock(prompt string, options Options) (*bedrockruntime.InvokeModelO
 	svc := bedrockruntime.NewFromConfig(cfg)
 
 	accept := "*/*"
-	modelId := viper.GetString("ModelID")
+	modelId := options.ModelID
 	contentType := "application/json"
 
-	payloadBody, err := SerializePayload(prompt)
+	payloadBody, err := SerializePayload(prompt, options)
 	if err != nil {
 		return nil, fmt.Errorf("unable to serialize payload body, %v", err)
 	}

@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-micah/chat-cli/bedrock"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // chatCmd represents the chat command
@@ -22,6 +23,10 @@ var chatCmd = &cobra.Command{
 		var conversation string
 		var err error
 		var options bedrock.Options
+
+		options.ModelID = viper.GetString("ModelId")
+		options.MaxTokensToSample = viper.GetInt("MaxTokensToSample")
+		options.Region = viper.GetString("region")
 
 		// initial prompt
 		fmt.Printf("Hi there. You can ask me stuff!\n")

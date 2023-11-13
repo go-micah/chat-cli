@@ -59,6 +59,7 @@ func initConfig() {
 
 	viper.SetDefault("ModelID", "anthropic.claude-v2")
 	viper.SetDefault("MaxTokensToSample", 500)
+	viper.SetDefault("region", "us-east-1")
 
 	if cfgFile != "" {
 		// Use config file from the flag.

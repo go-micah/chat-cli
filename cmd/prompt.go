@@ -25,6 +25,8 @@ var promptCmd = &cobra.Command{
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		var options bedrock.Options
+		options.Region = viper.GetString("region")
+
 		var document string
 
 		if isatty.IsTerminal(os.Stdin.Fd()) || isatty.IsCygwinTerminal(os.Stdin.Fd()) {
@@ -43,6 +45,9 @@ var promptCmd = &cobra.Command{
 
 		model := viper.GetString("ModelID")
 		modelTLD := model[:strings.IndexByte(model, '.')]
+
+		options.ModelID = model
+		options.MaxTokensToSample = viper.GetInt("MaxTokensToSample")
 
 		if modelTLD == "anthropic" {
 			prompt = " \\n\\nHuman: " + prompt
