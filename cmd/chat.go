@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/go-micah/chat-cli/bedrock"
@@ -25,8 +26,23 @@ var chatCmd = &cobra.Command{
 		var options bedrock.Options
 
 		options.ModelID = viper.GetString("ModelId")
+		options.Region = viper.GetString("Region")
+
+		options.TopP = viper.GetFloat64("TopP")
+		options.TopK = viper.GetInt("TopK")
+		options.Temperature = viper.GetFloat64("Temperature")
 		options.MaxTokensToSample = viper.GetInt("MaxTokensToSample")
-		options.Region = viper.GetString("region")
+
+		options.StopSequences = []string{
+			`"\n\nHuman:\"`,
+		}
+
+		model := options.ModelID
+		modelTLD := model[:strings.IndexByte(model, '.')]
+
+		if modelTLD != "anthropic" {
+			log.Fatalln("I'm sorry, but chat is currently only available with Anthropic LLMs")
+		}
 
 		// initial prompt
 		fmt.Printf("Hi there. You can ask me stuff!\n")
