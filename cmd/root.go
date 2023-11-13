@@ -60,16 +60,16 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&modelId, "model-id", "m", "anthropic.claude-v2", "LLM Model ID to use")
 	viper.BindPFlag("ModelID", rootCmd.PersistentFlags().Lookup("model-id"))
 
-	rootCmd.PersistentFlags().IntVar(&maxTokensToSample, "max-tokens", 500, "Max tokens to sample")
+	rootCmd.PersistentFlags().IntVarP(&maxTokensToSample, "tokens", "t", 500, "Max tokens to sample")
 	viper.BindPFlag("MaxTokensToSample", rootCmd.PersistentFlags().Lookup("max-tokens"))
 
-	rootCmd.PersistentFlags().Float64Var(&topP, "topP", 0.999, "Top P setting")
+	rootCmd.PersistentFlags().Float64VarP(&topP, "topP", "p", 0.999, "Top P setting")
 	viper.BindPFlag("TopP", rootCmd.PersistentFlags().Lookup("topP"))
 
-	rootCmd.PersistentFlags().IntVar(&topK, "topK", 250, "Top K setting")
+	rootCmd.PersistentFlags().IntVarP(&topK, "topK", "k", 250, "Top K setting")
 	viper.BindPFlag("TopK", rootCmd.PersistentFlags().Lookup("topK"))
 
-	rootCmd.PersistentFlags().Float64Var(&temperature, "temperature", 1, "Temperature setting")
+	rootCmd.PersistentFlags().Float64VarP(&temperature, "temperature", "d", 1, "Temperature setting")
 	viper.BindPFlag("Temperature", rootCmd.PersistentFlags().Lookup("temperature"))
 
 	// local flags
