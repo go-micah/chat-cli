@@ -2,7 +2,7 @@
 
 A little terminal based program that talks to the Amazon Bedrock API. This is very much a work in progress experiment.
 
-![](images/claude-2.png)
+![](images/chat.png)
 
 ## Prerequisites
 
