@@ -52,6 +52,19 @@ func processCohereResponse(resp bedrockruntime.InvokeModelOutput) string {
 	return response.Generations[0].Text
 }
 
+// processMetaResponse is a function that takes a response and prints the response
+func processMetaResponse(resp bedrockruntime.InvokeModelOutput) string {
+	var response bedrock.MetaResponse
+
+	err := json.Unmarshal(resp.Body, &response)
+
+	if err != nil {
+		log.Fatal("failed to unmarshal", err)
+	}
+	fmt.Print(response.Generation)
+	return response.Generation
+}
+
 func processStabilityResponse(resp bedrockruntime.InvokeModelOutput) {
 	var response bedrock.StabilityResponse
 

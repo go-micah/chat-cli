@@ -51,6 +51,11 @@ type AI21Response struct {
 	Completion string
 }
 
+// MetaResponse is a struct that represents the response from Bedrock
+type MetaResponse struct {
+	Generation string `json:"generation"`
+}
+
 // StabilityResponse is a struct that represents the response from Stability
 type StabilityResponse struct {
 	Result    string              `json:"result"`
@@ -102,6 +107,14 @@ type CoherePayloadBody struct {
 	ReturnLiklihoods  string   `json:"return_likelihoods"`
 	Stream            bool     `json:"stream"`
 	// Generations       int      `json:"num_generations"`
+}
+
+// MetaPayloadBody is a struct that represents the payload body for the post request to Bedrock
+type MetaPayloadBody struct {
+	Prompt            string  `json:"prompt"`
+	Temperature       float64 `json:"temperature"`
+	TopP              float64 `json:"top_p"`
+	MaxTokensToSample int     `json:"max_gen_len"`
 }
 
 // StabilityTextPrompts is a struct that represents the text prompts for the post request to Bedrock
@@ -172,6 +185,23 @@ func SerializePayload(prompt string, options Options) ([]byte, error) {
 		body.StopSequences = options.StopSequences
 		body.ReturnLiklihoods = options.ReturnLiklihoods
 		body.Stream = options.Stream
+
+		payloadBody, err := json.Marshal(body)
+		if err != nil {
+			return nil, fmt.Errorf("unable to marshal payload body, %v", err)
+		}
+
+		return payloadBody, nil
+	}
+
+	// if config says meta, use MetaPayloadBody
+	if modelTLD == "meta" {
+
+		var body MetaPayloadBody
+		body.Prompt = prompt
+		body.Temperature = options.Temperature
+		body.TopP = options.TopP
+		body.MaxTokensToSample = options.MaxTokensToSample
 
 		payloadBody, err := json.Marshal(body)
 		if err != nil {

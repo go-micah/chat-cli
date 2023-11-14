@@ -93,6 +93,10 @@ var promptCmd = &cobra.Command{
 				_ = processCohereResponse(*resp)
 			}
 
+			if modelTLD == "meta" {
+				_ = processMetaResponse(*resp)
+			}
+
 			if modelTLD == "stability" {
 				processStabilityResponse(*resp)
 			}
