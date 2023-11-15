@@ -10,7 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-micah/chat-cli/bedrock"
+	"github.com/briandowns/spinner"
+	"github.com/go-micah/go-bedrock"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -65,7 +66,7 @@ var chatCmd = &cobra.Command{
 				_ = os.Mkdir("chats", os.ModePerm)
 				t := time.Now()
 				filename := "chats/" + t.Format("2006-01-02") + ".txt"
-				err := bedrock.SaveTranscriptToFile(conversation, filename)
+				err := SaveTranscriptToFile(conversation, filename)
 				if err != nil {
 					log.Fatalf("error: %v", err)
 				}
@@ -78,7 +79,7 @@ var chatCmd = &cobra.Command{
 				prompt = ""
 				t := time.Now()
 				filename := "chats/" + t.Format("2006-01-02") + ".txt"
-				conversation, err = bedrock.LoadTranscriptFromFile(filename)
+				conversation, err = LoadTranscriptFromFile(filename)
 				if err != nil {
 					log.Fatalf("error: %v", err)
 				}
@@ -95,10 +96,13 @@ var chatCmd = &cobra.Command{
 			}
 
 			conversation = conversation + " \\n\\nHuman: " + prompt
+			s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+			s.Start()
 			resp, err := bedrock.SendToBedrockWithResponseStream(conversation, options)
 			if err != nil {
 				log.Fatalf("error: %v", err)
 			}
+			s.Stop()
 
 			chunks := processStreamingResponse(*resp)
 			conversation = conversation + " \\n\\nAssistant: " + chunks

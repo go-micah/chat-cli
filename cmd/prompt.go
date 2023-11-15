@@ -8,8 +8,10 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
-	"github.com/go-micah/chat-cli/bedrock"
+	"github.com/briandowns/spinner"
+	"github.com/go-micah/go-bedrock"
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -69,17 +71,23 @@ var promptCmd = &cobra.Command{
 			if modelTLD != "anthropic" {
 				log.Fatal("the model you are using does not yet support streaming")
 			}
+			s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+			s.Start()
 			resp, err := bedrock.SendToBedrockWithResponseStream(prompt, options)
 			if err != nil {
 				log.Fatalf("error: %v", err)
 			}
+			s.Stop()
 
 			_ = processStreamingResponse(*resp)
 		} else {
+			s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+			s.Start()
 			resp, err := bedrock.SendToBedrock(prompt, options)
 			if err != nil {
 				log.Fatalf("error: %v", err)
 			}
+			s.Stop()
 
 			if modelTLD == "anthropic" {
 				_ = processAnthropicResponse(*resp)

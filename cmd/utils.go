@@ -10,7 +10,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime/types"
-	"github.com/go-micah/chat-cli/bedrock"
+	"github.com/go-micah/go-bedrock"
 )
 
 // processAnthropicResponse is a function that takes a response and prints the response
@@ -147,4 +147,38 @@ func stringPrompt(label string) string {
 	}
 
 	return s
+}
+
+// LoadTranscriptFromFile is a function that loads a chat transcript from a text file
+func LoadTranscriptFromFile(filename string) (string, error) {
+
+	file, err := os.Open(filename)
+	if err != nil {
+		return "", fmt.Errorf("unable to open file, %v", err)
+	}
+	defer file.Close()
+	reader := bufio.NewReader(file)
+	var transcript string
+	for {
+		line, err := reader.ReadString('\n')
+		transcript += line + "\n"
+		if err != nil {
+			break
+		}
+	}
+	return transcript, nil
+}
+
+// SaveTranscriptToFile is a function that saves a chat transcript to a text file
+func SaveTranscriptToFile(transcript string, filename string) error {
+
+	file, err := os.Create(filename)
+	if err != nil {
+		return fmt.Errorf("unable to create file, %v", err)
+	}
+	defer file.Close()
+	writer := bufio.NewWriter(file)
+	writer.WriteString(transcript)
+	writer.Flush()
+	return nil
 }
