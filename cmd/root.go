@@ -19,6 +19,9 @@ var maxTokensToSample int
 var topP float64
 var topK int
 var temperature float64
+var scale float64
+var seed int
+var steps int
 
 // var stopSequences []string
 // var returnLiklihoods string
@@ -72,6 +75,15 @@ func init() {
 	rootCmd.PersistentFlags().Float64VarP(&temperature, "temperature", "d", 1, "Temperature setting")
 	viper.BindPFlag("Temperature", rootCmd.PersistentFlags().Lookup("temperature"))
 
+	rootCmd.PersistentFlags().Float64Var(&scale, "scale", 10, "Scale setting")
+	viper.BindPFlag("Scale", rootCmd.PersistentFlags().Lookup("scale"))
+
+	rootCmd.PersistentFlags().IntVar(&seed, "seed", 0, "Seed setting")
+	viper.BindPFlag("Seed", rootCmd.PersistentFlags().Lookup("seed"))
+
+	rootCmd.PersistentFlags().IntVar(&steps, "steps", 50, "Steps setting")
+	viper.BindPFlag("Steps", rootCmd.PersistentFlags().Lookup("steps"))
+
 	// local flags
 	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
@@ -89,6 +101,9 @@ func initConfig() {
 	viper.SetDefault("StopSequences", []string{`"\n\nHuman:\"`})
 	viper.SetDefault("ReturnLiklihoods", "NONE")
 	viper.SetDefault("Stream", false)
+	viper.SetDefault("Scale", 10)
+	viper.SetDefault("Seed", 0)
+	viper.SetDefault("Steps", 50)
 
 	if cfgFile != "" {
 		// Use config file from the flag.
