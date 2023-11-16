@@ -5,7 +5,7 @@ go 1.21.3
 require (
 	github.com/aws/aws-sdk-go-v2/service/bedrockruntime v1.3.1
 	github.com/briandowns/spinner v1.23.0
-	github.com/go-micah/go-bedrock v0.0.0-20231115032216-80cf9d17420d
+	github.com/go-micah/go-bedrock v0.0.1
 	github.com/mattn/go-isatty v0.0.20
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.17.0
