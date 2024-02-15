@@ -113,6 +113,17 @@ var promptCmd = &cobra.Command{
 			if err != nil {
 				log.Fatalf("unable to marshal body: %v", err)
 			}
+		case "llama":
+			body := providers.MetaLlamaInvokeModelInput{
+				Prompt:            prompt,
+				Temperature:       0.5,
+				TopP:              0.9,
+				MaxTokensToSample: 512,
+			}
+			bodyString, err = json.Marshal(body)
+			if err != nil {
+				log.Fatalf("unable to marshal body: %v", err)
+			}
 		default:
 			log.Fatalf("invalid model: %s", m.ModelID)
 		}
@@ -179,6 +190,14 @@ var promptCmd = &cobra.Command{
 					log.Fatalf("unable to unmarshal response from Bedrock: %v", err)
 				}
 				fmt.Println(out.Generations[0].Text)
+			case "llama":
+				var out providers.MetaLlamaInvokeModelOutput
+
+				err = json.Unmarshal(resp.Body, &out)
+				if err != nil {
+					log.Fatalf("unable to unmarshal response from Bedrock: %v", err)
+				}
+				fmt.Println(out.Generation)
 			default:
 				log.Fatalf("invalid model: %s", m.ModelID)
 			}
@@ -244,6 +263,37 @@ var promptCmd = &cobra.Command{
 								continue
 							}
 							fmt.Printf("%v", out.Generations[0].Text)
+						} else if v, ok := event.(*types.UnknownUnionMember); ok {
+							// catchall
+							fmt.Print(v.Value)
+						}
+					} else {
+						break
+					}
+				}
+				stream.Close()
+
+				if stream.Err() != nil {
+					log.Fatalf("error from Bedrock, %v", stream.Err())
+				}
+				fmt.Println()
+			case "llama":
+				var out providers.MetaLlamaInvokeModelOutput
+
+				stream := resp.GetStream().Reader
+				events := stream.Events()
+
+				for {
+					event := <-events
+					if event != nil {
+						if v, ok := event.(*types.ResponseStreamMemberChunk); ok {
+							// v has fields
+							err := json.Unmarshal([]byte(v.Value.Bytes), &out)
+							if err != nil {
+								log.Printf("unable to decode response:, %v", err)
+								continue
+							}
+							fmt.Printf("%v", out.Generation)
 						} else if v, ok := event.(*types.UnknownUnionMember); ok {
 							// catchall
 							fmt.Print(v.Value)

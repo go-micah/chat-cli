@@ -50,6 +50,13 @@ var models = []Model{
 		SupportsStreaming: false,
 	},
 	{
+		ModelID:           "cohere.command-light-text-v14",
+		ModelFamily:       "command",
+		ModelType:         "text",
+		BaseModel:         true,
+		SupportsStreaming: true,
+	},
+	{
 		ModelID:           "cohere.command-text-v14",
 		ModelFamily:       "command",
 		ModelType:         "text",
@@ -57,10 +64,17 @@ var models = []Model{
 		SupportsStreaming: true,
 	},
 	{
-		ModelID:           "cohere.command-light-text-v14",
-		ModelFamily:       "command",
+		ModelID:           "meta.llama2-13b-chat-v1",
+		ModelFamily:       "llama",
 		ModelType:         "text",
 		BaseModel:         true,
+		SupportsStreaming: true,
+	},
+	{
+		ModelID:           "meta.llama2-70b-chat-v1",
+		ModelFamily:       "llama",
+		ModelType:         "text",
+		BaseModel:         false,
 		SupportsStreaming: true,
 	},
 }
