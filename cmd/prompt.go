@@ -112,7 +112,12 @@ var promptCmd = &cobra.Command{
 		}
 
 		// set up connection to AWS
-		cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("us-east-1"))
+		region, err := cmd.Parent().PersistentFlags().GetString("region")
+		if err != nil {
+			log.Fatalf("unable to get flag: %v", err)
+		}
+
+		cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
 		if err != nil {
 			log.Fatalf("unable to load AWS config: %v", err)
 		}
