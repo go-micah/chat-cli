@@ -23,7 +23,10 @@ import (
 var chatCmd = &cobra.Command{
 	Use:   "chat",
 	Short: "Start an interactive chat session",
-	Long:  `Begin an interactive chat session with an LLM via Amazon Bedrock`,
+	Long: `Begin an interactive chat session with an LLM via Amazon Bedrock
+	
+To quit the chat, just type "quit"	
+`,
 
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
