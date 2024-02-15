@@ -91,3 +91,12 @@ You can disable streaming like this:
     $ ./bin/chat-cli prompt "What is event driven architecture?" --no-stream
 
 Only streaming response capable models can be used with the `chat` command. 
+
+## Model Config
+
+There are several flags you can use to overide the default config settings. Not all config settings are used by each model.
+
+    --max-tokens defaults to 500
+    --temperature defaults to 1
+    --topP defaults to 0.999
+    --topK defaults to 250
