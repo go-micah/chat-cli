@@ -1,5 +1,5 @@
 /*
-Copyright © 2023 Micah Walter
+Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 */
 package main
 

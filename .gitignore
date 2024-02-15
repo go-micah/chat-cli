@@ -1,7 +1,0 @@
-bin/*
-chats/*
-output/*
-constitution.txt
-.DS_Store
-
-dist/

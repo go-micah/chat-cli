@@ -1,31 +1,13 @@
 /*
-Copyright © 2023 Micah Walter
+Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 */
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
-
-var cfgFile string
-var region string
-
-var modelId string
-var maxTokensToSample int
-var topP float64
-var topK int
-var temperature float64
-var scale float64
-var seed int
-var steps int
-
-// var stopSequences []string
-// var returnLiklihoods string
-var stream bool
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -33,9 +15,9 @@ var rootCmd = &cobra.Command{
 	Short: "Chat with LLMs from Amazon Bedrock!",
 	Long:  `This is a command line tool that allows you to chat with LLMs from Amazon Bedrock!`,
 
-	// Run: func(cmd *cobra.Command, args []string) {
-	// 	fmt.Print(args)
-	// },
+	// Uncomment the following line if your bare application
+	// has an action associated with it:
+	// Run: func(cmd *cobra.Command, args []string) { },
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -48,81 +30,20 @@ func Execute() {
 }
 
 func init() {
-	cobra.OnInitialize(initConfig)
+	// Here you will define your flags and configuration settings.
+	// Cobra supports persistent flags, which, if defined here,
+	// will be global for your application.
 
-	// global flags
+	//rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.chat-cli.yaml)")
+	rootCmd.PersistentFlags().StringP("region", "r", "us-east-1", "set the AWS region")
+	rootCmd.PersistentFlags().StringP("model-id", "m", "anthropic.claude-instant-v1", "set the model id")
 
-	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file (default is $HOME/.chat-cli.yaml)")
+	rootCmd.PersistentFlags().Float64("temperature", 1, "temperature setting")
+	rootCmd.PersistentFlags().Float64("topP", 0.999, "topP setting")
+	rootCmd.PersistentFlags().Float64("topK", 250, "topK setting")
+	rootCmd.PersistentFlags().Int("max-tokens", 500, "max tokens to sample")
 
-	rootCmd.PersistentFlags().StringVarP(&region, "region", "r", "us-east-1", "AWS Region")
-	viper.BindPFlag("Region", rootCmd.PersistentFlags().Lookup("region"))
-
-	rootCmd.PersistentFlags().BoolVarP(&stream, "stream", "s", false, "Use the streaming API")
-	viper.BindPFlag("Stream", rootCmd.PersistentFlags().Lookup("stream"))
-
-	rootCmd.PersistentFlags().StringVarP(&modelId, "model-id", "m", "anthropic.claude-v2", "LLM Model ID to use")
-	viper.BindPFlag("ModelID", rootCmd.PersistentFlags().Lookup("model-id"))
-
-	rootCmd.PersistentFlags().IntVarP(&maxTokensToSample, "tokens", "t", 500, "Max tokens to sample")
-	viper.BindPFlag("MaxTokensToSample", rootCmd.PersistentFlags().Lookup("max-tokens"))
-
-	rootCmd.PersistentFlags().Float64VarP(&topP, "topP", "p", 0.999, "Top P setting")
-	viper.BindPFlag("TopP", rootCmd.PersistentFlags().Lookup("topP"))
-
-	rootCmd.PersistentFlags().IntVarP(&topK, "topK", "k", 250, "Top K setting")
-	viper.BindPFlag("TopK", rootCmd.PersistentFlags().Lookup("topK"))
-
-	rootCmd.PersistentFlags().Float64VarP(&temperature, "temperature", "d", 1, "Temperature setting")
-	viper.BindPFlag("Temperature", rootCmd.PersistentFlags().Lookup("temperature"))
-
-	rootCmd.PersistentFlags().Float64Var(&scale, "scale", 10, "Scale setting")
-	viper.BindPFlag("Scale", rootCmd.PersistentFlags().Lookup("scale"))
-
-	rootCmd.PersistentFlags().IntVar(&seed, "seed", 0, "Seed setting")
-	viper.BindPFlag("Seed", rootCmd.PersistentFlags().Lookup("seed"))
-
-	rootCmd.PersistentFlags().IntVar(&steps, "steps", 50, "Steps setting")
-	viper.BindPFlag("Steps", rootCmd.PersistentFlags().Lookup("steps"))
-
-	// local flags
+	// Cobra also supports local flags, which will only run
+	// when this action is called directly.
 	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-}
-
-// initConfig reads in config file and ENV variables if set.
-func initConfig() {
-
-	viper.SetDefault("Region", "us-east-1")
-
-	viper.SetDefault("ModelID", "anthropic.claude-v2")
-	viper.SetDefault("MaxTokensToSample", 500)
-	viper.SetDefault("TopP", 0.999)
-	viper.SetDefault("TopK", 250)
-	viper.SetDefault("Temperature", 1)
-	viper.SetDefault("StopSequences", []string{`"\n\nHuman:\"`})
-	viper.SetDefault("ReturnLiklihoods", "NONE")
-	viper.SetDefault("Stream", false)
-	viper.SetDefault("Scale", 10)
-	viper.SetDefault("Seed", 0)
-	viper.SetDefault("Steps", 50)
-
-	if cfgFile != "" {
-		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
-	} else {
-		// Find home directory.
-		home, err := os.UserHomeDir()
-		cobra.CheckErr(err)
-
-		// Search config in home directory with name ".chat-cli" (without extension).
-		viper.AddConfigPath(home)
-		viper.SetConfigType("yaml")
-		viper.SetConfigName(".chat-cli")
-	}
-
-	viper.AutomaticEnv() // read in environment variables that match
-
-	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
-	}
 }
