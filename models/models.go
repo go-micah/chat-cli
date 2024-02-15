@@ -49,20 +49,20 @@ var models = []Model{
 		BaseModel:         false,
 		SupportsStreaming: false,
 	},
-	// {
-	// 	ModelID:           "cohere.command-text-v14",
-	// 	ModelFamily:       "command",
-	// 	ModelType:         "text",
-	// 	BaseModel:         false,
-	// 	SupportsStreaming: true,
-	// },
-	// {
-	// 	ModelID:           "cohere.command-light-text-v14",
-	// 	ModelFamily:       "command",
-	// 	ModelType:         "text",
-	// 	BaseModel:         true,
-	// 	SupportsStreaming: true,
-	// },
+	{
+		ModelID:           "cohere.command-text-v14",
+		ModelFamily:       "command",
+		ModelType:         "text",
+		BaseModel:         false,
+		SupportsStreaming: true,
+	},
+	{
+		ModelID:           "cohere.command-light-text-v14",
+		ModelFamily:       "command",
+		ModelType:         "text",
+		BaseModel:         true,
+		SupportsStreaming: true,
+	},
 }
 
 func GetModel(modelId string) (Model, error) {

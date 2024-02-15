@@ -98,11 +98,21 @@ var promptCmd = &cobra.Command{
 			if err != nil {
 				log.Fatalf("unable to marshal body: %v", err)
 			}
-		// case "command":
-		// 	body := providers.CohereCommandInvokeModelInput{
-		// 		Prompt: prompt,
-
-		// 	}
+		case "command":
+			body := providers.CohereCommandInvokeModelInput{
+				Prompt:            prompt,
+				Temperature:       0.75,
+				TopP:              0.01,
+				TopK:              0,
+				MaxTokensToSample: 300,
+				StopSequences:     []string{`""`},
+				ReturnLiklihoods:  "NONE",
+				NumGenerations:    1,
+			}
+			bodyString, err = json.Marshal(body)
+			if err != nil {
+				log.Fatalf("unable to marshal body: %v", err)
+			}
 		default:
 			log.Fatalf("invalid model: %s", m.ModelID)
 		}
@@ -161,6 +171,14 @@ var promptCmd = &cobra.Command{
 					log.Fatalf("unable to unmarshal response from Bedrock: %v", err)
 				}
 				fmt.Println(out.Completions[0].Data.Text)
+			case "command":
+				var out providers.CohereCommandInvokeModelOutput
+
+				err = json.Unmarshal(resp.Body, &out)
+				if err != nil {
+					log.Fatalf("unable to unmarshal response from Bedrock: %v", err)
+				}
+				fmt.Println(out.Generations[0].Text)
 			default:
 				log.Fatalf("invalid model: %s", m.ModelID)
 			}
@@ -209,7 +227,37 @@ var promptCmd = &cobra.Command{
 					log.Fatalf("error from Bedrock, %v", stream.Err())
 				}
 				fmt.Println()
+			case "command":
+				var out providers.CohereCommandInvokeModelOutput
 
+				stream := resp.GetStream().Reader
+				events := stream.Events()
+
+				for {
+					event := <-events
+					if event != nil {
+						if v, ok := event.(*types.ResponseStreamMemberChunk); ok {
+							// v has fields
+							err := json.Unmarshal([]byte(v.Value.Bytes), &out)
+							if err != nil {
+								log.Printf("unable to decode response:, %v", err)
+								continue
+							}
+							fmt.Printf("%v", out.Generations[0].Text)
+						} else if v, ok := event.(*types.UnknownUnionMember); ok {
+							// catchall
+							fmt.Print(v.Value)
+						}
+					} else {
+						break
+					}
+				}
+				stream.Close()
+
+				if stream.Err() != nil {
+					log.Fatalf("error from Bedrock, %v", stream.Err())
+				}
+				fmt.Println()
 			default:
 				log.Fatalf("invalid model: %s", m.ModelID)
 			}
