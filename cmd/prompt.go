@@ -14,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime/types"
+	"github.com/go-micah/chat-cli/models"
 	"github.com/go-micah/go-bedrock/providers"
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
@@ -61,24 +62,14 @@ var promptCmd = &cobra.Command{
 			log.Fatalf("unable to get flag: %v", err)
 		}
 
-		var modelFamily string
-		if (modelId == "anthropic.claude-v2:1") || (modelId == "anthropic.claude-v2") || (modelId == "anthropic.claude-instant-v1") {
-			modelFamily = "claude"
-		}
-		if modelId == "claude" {
-			modelId = "anthropic.claude-instant-v1"
-			modelFamily = "claude"
-		}
-		if (modelId == "ai21.j2-mid-v1") || (modelId == "ai21.j2-ultra-v1") {
-			modelFamily = "jurassic"
-		}
-		if modelId == "jurassic" {
-			modelId = "ai21.j2-mid-v1"
-			modelFamily = "jurassic"
+		// validate model is supported
+		m, err := models.GetModel(modelId)
+		if err != nil {
+			log.Fatalf("error: %v", err)
 		}
 
 		// serialize body
-		switch modelFamily {
+		switch m.ModelFamily {
 		case "claude":
 			body := providers.AnthropicClaudeInvokeModelInput{
 				Prompt:            "Human: \n\nHuman: " + prompt + "\n\nAssistant:",
@@ -107,8 +98,13 @@ var promptCmd = &cobra.Command{
 			if err != nil {
 				log.Fatalf("unable to marshal body: %v", err)
 			}
+		// case "command":
+		// 	body := providers.CohereCommandInvokeModelInput{
+		// 		Prompt: prompt,
+
+		// 	}
 		default:
-			log.Fatalf("invalid model: %s", modelId)
+			log.Fatalf("invalid model: %s", m.ModelID)
 		}
 
 		// set up connection to AWS
@@ -130,11 +126,16 @@ var promptCmd = &cobra.Command{
 			log.Fatalf("unable to get flag: %v", err)
 		}
 
+		// check if model supports streaming and --no-stream is not set
+		if (!noStream) && (!m.SupportsStreaming) {
+			log.Fatalf("model %s does not support streaming. please use the --no-stream flag", m.ModelID)
+		}
+
 		if noStream {
 			// invoke and wait for full response
 			resp, err := svc.InvokeModel(context.TODO(), &bedrockruntime.InvokeModelInput{
 				Accept:      &accept,
-				ModelId:     &modelId,
+				ModelId:     &m.ModelID,
 				ContentType: &contentType,
 				Body:        bodyString,
 			})
@@ -143,7 +144,7 @@ var promptCmd = &cobra.Command{
 			}
 
 			// print response
-			switch modelFamily {
+			switch m.ModelFamily {
 			case "claude":
 				var out providers.AnthropicClaudeInvokeModelOutput
 
@@ -161,13 +162,13 @@ var promptCmd = &cobra.Command{
 				}
 				fmt.Println(out.Completions[0].Data.Text)
 			default:
-				log.Fatalf("invalid model: %s", modelId)
+				log.Fatalf("invalid model: %s", m.ModelID)
 			}
 		} else {
 			// invoke with streaming response
 			resp, err := svc.InvokeModelWithResponseStream(context.TODO(), &bedrockruntime.InvokeModelWithResponseStreamInput{
 				Accept:      &accept,
-				ModelId:     &modelId,
+				ModelId:     &m.ModelID,
 				ContentType: &contentType,
 				Body:        bodyString,
 			})
@@ -176,7 +177,7 @@ var promptCmd = &cobra.Command{
 			}
 
 			// print streaming response
-			switch modelFamily {
+			switch m.ModelFamily {
 			case "claude":
 				var out providers.AnthropicClaudeInvokeModelOutput
 
@@ -210,7 +211,7 @@ var promptCmd = &cobra.Command{
 				fmt.Println()
 
 			default:
-				log.Fatalf("invalid model: %s", modelId)
+				log.Fatalf("invalid model: %s", m.ModelID)
 			}
 
 		}
