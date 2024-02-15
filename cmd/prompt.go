@@ -61,8 +61,25 @@ var promptCmd = &cobra.Command{
 			log.Fatalf("unable to get flag: %v", err)
 		}
 
-		switch modelId {
-		case "anthropic.claude-instant-v1":
+		var modelFamily string
+		if (modelId == "anthropic.claude-v2:1") || (modelId == "anthropic.claude-v2") || (modelId == "anthropic.claude-instant-v1") {
+			modelFamily = "claude"
+		}
+		if modelId == "claude" {
+			modelId = "anthropic.claude-instant-v1"
+			modelFamily = "claude"
+		}
+		if (modelId == "ai21.j2-mid-v1") || (modelId == "ai21.j2-ultra-v1") {
+			modelFamily = "jurassic"
+		}
+		if modelId == "jurassic" {
+			modelId = "ai21.j2-mid-v1"
+			modelFamily = "jurassic"
+		}
+
+		// serialize body
+		switch modelFamily {
+		case "claude":
 			body := providers.AnthropicClaudeInvokeModelInput{
 				Prompt:            "Human: \n\nHuman: " + prompt + "\n\nAssistant:",
 				MaxTokensToSample: 300,
@@ -78,10 +95,23 @@ var promptCmd = &cobra.Command{
 			if err != nil {
 				log.Fatalf("unable to marshal body: %v", err)
 			}
+		case "jurassic":
+			body := providers.AI21LabsJurassicInvokeModelInput{
+				Prompt:            prompt,
+				Temperature:       0.7,
+				TopP:              1,
+				MaxTokensToSample: 300,
+				StopSequences:     []string{`""`},
+			}
+			bodyString, err = json.Marshal(body)
+			if err != nil {
+				log.Fatalf("unable to marshal body: %v", err)
+			}
 		default:
 			log.Fatalf("invalid model: %s", modelId)
 		}
 
+		// set up connection to AWS
 		cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("us-east-1"))
 		if err != nil {
 			log.Fatalf("unable to load AWS config: %v", err)
@@ -96,7 +126,7 @@ var promptCmd = &cobra.Command{
 		}
 
 		if noStream {
-
+			// invoke and wait for full response
 			resp, err := svc.InvokeModel(context.TODO(), &bedrockruntime.InvokeModelInput{
 				Accept:      &accept,
 				ModelId:     &modelId,
@@ -107,8 +137,9 @@ var promptCmd = &cobra.Command{
 				log.Fatalf("error from Bedrock, %v", err)
 			}
 
-			switch modelId {
-			case "anthropic.claude-instant-v1":
+			// print response
+			switch modelFamily {
+			case "claude":
 				var out providers.AnthropicClaudeInvokeModelOutput
 
 				err = json.Unmarshal(resp.Body, &out)
@@ -116,6 +147,14 @@ var promptCmd = &cobra.Command{
 					log.Fatalf("unable to unmarshal response from Bedrock: %v", err)
 				}
 				fmt.Println(out.Completion)
+			case "jurassic":
+				var out providers.AI21LabsJurrasicInvokeModelOutput
+
+				err = json.Unmarshal(resp.Body, &out)
+				if err != nil {
+					log.Fatalf("unable to unmarshal response from Bedrock: %v", err)
+				}
+				fmt.Println(out.Completions[0].Data.Text)
 			default:
 				log.Fatalf("invalid model: %s", modelId)
 			}
@@ -131,8 +170,9 @@ var promptCmd = &cobra.Command{
 				log.Fatalf("error from Bedrock, %v", err)
 			}
 
-			switch modelId {
-			case "anthropic.claude-instant-v1":
+			// print streaming response
+			switch modelFamily {
+			case "claude":
 				var out providers.AnthropicClaudeInvokeModelOutput
 
 				stream := resp.GetStream().Reader
