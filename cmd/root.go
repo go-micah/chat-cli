@@ -40,6 +40,8 @@ func init() {
 
 	//rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.chat-cli.yaml)")
 	rootCmd.PersistentFlags().StringP("region", "r", "us-east-1", "set the AWS region")
+	rootCmd.PersistentFlags().StringP("model-id", "m", "anthropic.claude-instant-v1", "set the model id")
+
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
