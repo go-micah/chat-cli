@@ -68,15 +68,35 @@ var promptCmd = &cobra.Command{
 			log.Fatalf("error: %v", err)
 		}
 
+		// get options
+		temperature, err := cmd.Parent().PersistentFlags().GetFloat64("temperature")
+		if err != nil {
+			log.Fatalf("unable to get flag: %v", err)
+		}
+
+		topP, err := cmd.Parent().PersistentFlags().GetFloat64("topP")
+		if err != nil {
+			log.Fatalf("unable to get flag: %v", err)
+		}
+
+		topK, err := cmd.Parent().PersistentFlags().GetFloat64("topK")
+		if err != nil {
+			log.Fatalf("unable to get flag: %v", err)
+		}
+
+		maxTokens, err := cmd.Parent().PersistentFlags().GetInt("max-tokens")
+		if err != nil {
+			log.Fatalf("unable to get flag: %v", err)
+		}
 		// serialize body
 		switch m.ModelFamily {
 		case "claude":
 			body := providers.AnthropicClaudeInvokeModelInput{
 				Prompt:            "Human: \n\nHuman: " + prompt + "\n\nAssistant:",
-				MaxTokensToSample: 300,
-				Temperature:       1,
-				TopK:              250,
-				TopP:              0.999,
+				MaxTokensToSample: maxTokens,
+				Temperature:       temperature,
+				TopK:              int(topK),
+				TopP:              topP,
 				StopSequences: []string{
 					"\n\nHuman:",
 				},
@@ -89,9 +109,9 @@ var promptCmd = &cobra.Command{
 		case "jurassic":
 			body := providers.AI21LabsJurassicInvokeModelInput{
 				Prompt:            prompt,
-				Temperature:       0.7,
-				TopP:              1,
-				MaxTokensToSample: 300,
+				Temperature:       temperature,
+				TopP:              topP,
+				MaxTokensToSample: maxTokens,
 				StopSequences:     []string{`""`},
 			}
 			bodyString, err = json.Marshal(body)
@@ -101,10 +121,10 @@ var promptCmd = &cobra.Command{
 		case "command":
 			body := providers.CohereCommandInvokeModelInput{
 				Prompt:            prompt,
-				Temperature:       0.75,
-				TopP:              0.01,
-				TopK:              0,
-				MaxTokensToSample: 300,
+				Temperature:       temperature,
+				TopP:              topP,
+				TopK:              topK,
+				MaxTokensToSample: maxTokens,
 				StopSequences:     []string{`""`},
 				ReturnLiklihoods:  "NONE",
 				NumGenerations:    1,
@@ -116,9 +136,9 @@ var promptCmd = &cobra.Command{
 		case "llama":
 			body := providers.MetaLlamaInvokeModelInput{
 				Prompt:            prompt,
-				Temperature:       0.5,
-				TopP:              0.9,
-				MaxTokensToSample: 512,
+				Temperature:       temperature,
+				TopP:              topP,
+				MaxTokensToSample: maxTokens,
 			}
 			bodyString, err = json.Marshal(body)
 			if err != nil {
@@ -126,9 +146,9 @@ var promptCmd = &cobra.Command{
 			}
 		case "titan":
 			config := providers.AmazonTitanTextGenerationConfig{
-				Temperature:       0,
-				TopP:              0.9,
-				MaxTokensToSample: 1000,
+				Temperature:       temperature,
+				TopP:              topP,
+				MaxTokensToSample: maxTokens,
 				StopSequences: []string{
 					"User:",
 				},

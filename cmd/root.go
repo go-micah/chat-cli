@@ -42,6 +42,11 @@ func init() {
 	rootCmd.PersistentFlags().StringP("region", "r", "us-east-1", "set the AWS region")
 	rootCmd.PersistentFlags().StringP("model-id", "m", "anthropic.claude-instant-v1", "set the model id")
 
+	rootCmd.PersistentFlags().Float64("temperature", 1, "temperature setting")
+	rootCmd.PersistentFlags().Float64("topP", 0.999, "topP setting")
+	rootCmd.PersistentFlags().Float64("topK", 250, "topK setting")
+	rootCmd.PersistentFlags().Int("max-tokens", 500, "max tokens to sample")
+
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
