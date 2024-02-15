@@ -77,6 +77,20 @@ var models = []Model{
 		BaseModel:         false,
 		SupportsStreaming: true,
 	},
+	{
+		ModelID:           "amazon.titan-text-lite-v1",
+		ModelFamily:       "titan",
+		ModelType:         "text",
+		BaseModel:         true,
+		SupportsStreaming: false,
+	},
+	{
+		ModelID:           "amazon.titan-text-express-v1",
+		ModelFamily:       "titan",
+		ModelType:         "text",
+		BaseModel:         false,
+		SupportsStreaming: false,
+	},
 }
 
 func GetModel(modelId string) (Model, error) {

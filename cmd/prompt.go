@@ -124,6 +124,24 @@ var promptCmd = &cobra.Command{
 			if err != nil {
 				log.Fatalf("unable to marshal body: %v", err)
 			}
+		case "titan":
+			config := providers.AmazonTitanTextGenerationConfig{
+				Temperature:       0,
+				TopP:              0.9,
+				MaxTokensToSample: 1000,
+				StopSequences: []string{
+					"User:",
+				},
+			}
+
+			body := providers.AmazonTitanTextInvokeModelInput{
+				Prompt: prompt,
+				Config: config,
+			}
+			bodyString, err = json.Marshal(body)
+			if err != nil {
+				log.Fatalf("unable to marshal body: %v", err)
+			}
 		default:
 			log.Fatalf("invalid model: %s", m.ModelID)
 		}
@@ -198,6 +216,14 @@ var promptCmd = &cobra.Command{
 					log.Fatalf("unable to unmarshal response from Bedrock: %v", err)
 				}
 				fmt.Println(out.Generation)
+			case "titan":
+				var out providers.AmazonTitanTextInvokeModelOutput
+
+				err = json.Unmarshal(resp.Body, &out)
+				if err != nil {
+					log.Fatalf("unable to unmarshal response from Bedrock: %v", err)
+				}
+				fmt.Println(out.Results[0].OutputText)
 			default:
 				log.Fatalf("invalid model: %s", m.ModelID)
 			}
