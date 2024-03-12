@@ -15,6 +15,13 @@ type Model struct {
 
 var models = []Model{
 	{
+		ModelID:           "anthropic.claude-3-sonnet-20240229-v1:0",
+		ModelFamily:       "claude3",
+		ModelType:         "text",
+		BaseModel:         true,
+		SupportsStreaming: false,
+	},
+	{
 		ModelID:           "anthropic.claude-v2:1",
 		ModelFamily:       "claude",
 		ModelType:         "text",

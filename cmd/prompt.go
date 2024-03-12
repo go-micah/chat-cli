@@ -90,6 +90,30 @@ var promptCmd = &cobra.Command{
 		}
 		// serialize body
 		switch m.ModelFamily {
+		case "claude3":
+			body := providers.AnthropicClaudeMessagesInvokeModelInput{
+				Messages: []providers.AnthropicClaudeMessage{
+					{
+						Role: "user",
+						Content: []providers.AnthropicClaudeContent{
+							{
+								Type: "text",
+								Text: prompt,
+							},
+						},
+					},
+				},
+				MaxTokens:     500,
+				TopP:          0.999,
+				TopK:          250,
+				Temperature:   1,
+				StopSequences: []string{},
+			}
+
+			bodyString, err = json.Marshal(body)
+			if err != nil {
+				log.Fatalf("unable to marshal body: %v", err)
+			}
 		case "claude":
 			body := providers.AnthropicClaudeInvokeModelInput{
 				Prompt:            "Human: \n\nHuman: " + prompt + "\n\nAssistant:",
@@ -204,6 +228,14 @@ var promptCmd = &cobra.Command{
 
 			// print response
 			switch m.ModelFamily {
+			case "claude3":
+				var out providers.AnthropicClaudeMessagesInvokeModelOutput
+
+				err = json.Unmarshal(resp.Body, &out)
+				if err != nil {
+					log.Fatalf("unable to unmarshal response from Bedrock: %v", err)
+				}
+				fmt.Println(out.Content[0].Text)
 			case "claude":
 				var out providers.AnthropicClaudeInvokeModelOutput
 
