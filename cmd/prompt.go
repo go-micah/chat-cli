@@ -104,10 +104,10 @@ var promptCmd = &cobra.Command{
 						},
 					},
 				},
-				MaxTokens:     500,
-				TopP:          0.999,
-				TopK:          250,
-				Temperature:   1,
+				MaxTokens:     maxTokens,
+				TopP:          topP,
+				TopK:          int(topK),
+				Temperature:   temperature,
 				StopSequences: []string{},
 			}
 
