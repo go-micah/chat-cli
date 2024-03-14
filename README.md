@@ -60,7 +60,8 @@ To switch LLMs, use the `--model-id` flag. You can supply a valid model id from 
 
 | Provider  | Model ID                      | Family Name | Streaming Capable | Base Model |
 |-----------|-------------------------------|-------------|-------------------|------------|
-| Anthropic | anthropic.claude-3-sonnet-20240229-v1:0   | claude3      | not yet               | yes        |
+| Anthropic | anthropic.claude-3-haiku-20240307-v1:0   | claude3      | not yet               | yes        |
+| Anthropic | anthropic.claude-3-sonnet-20240229-v1:0   | claude3      | not yet               | no        |
 | Anthropic | anthropic.claude-v2:1         | claude      | yes               |            |
 | Anthropic | anthropic.claude-v2           | claude      | yes               |            |
 | Anthropic | anthropic.claude-instant-v1   | claude      | yes               | yes        |
