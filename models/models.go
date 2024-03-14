@@ -18,6 +18,13 @@ var models = []Model{
 		ModelID:           "anthropic.claude-3-sonnet-20240229-v1:0",
 		ModelFamily:       "claude3",
 		ModelType:         "text",
+		BaseModel:         false,
+		SupportsStreaming: false,
+	},
+	{
+		ModelID:           "anthropic.claude-3-haiku-20240307-v1:0",
+		ModelFamily:       "claude3",
+		ModelType:         "text",
 		BaseModel:         true,
 		SupportsStreaming: false,
 	},

@@ -91,15 +91,16 @@ var promptCmd = &cobra.Command{
 		// serialize body
 		switch m.ModelFamily {
 		case "claude3":
+			textPrompt := providers.AnthropicClaudeContent{
+				Type: "text",
+				Text: prompt,
+			}
 			body := providers.AnthropicClaudeMessagesInvokeModelInput{
 				Messages: []providers.AnthropicClaudeMessage{
 					{
 						Role: "user",
 						Content: []providers.AnthropicClaudeContent{
-							{
-								Type: "text",
-								Text: prompt,
-							},
+							textPrompt,
 						},
 					},
 				},
