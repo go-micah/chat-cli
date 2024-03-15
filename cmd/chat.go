@@ -31,7 +31,7 @@ To quit the chat, just type "quit"
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 
-		modelId, err := cmd.Parent().PersistentFlags().GetString("model-id")
+		modelId, err := cmd.PersistentFlags().GetString("model-id")
 		if err != nil {
 			log.Fatalf("unable to get flag: %v", err)
 		}
@@ -296,6 +296,7 @@ func init() {
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
 	// chatCmd.PersistentFlags().String("foo", "", "A help for foo")
+	chatCmd.PersistentFlags().StringP("model-id", "m", "anthropic.claude-instant-v1", "set the model id")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
