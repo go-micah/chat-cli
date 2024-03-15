@@ -36,7 +36,7 @@ func init() {
 
 	//rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.chat-cli.yaml)")
 	rootCmd.PersistentFlags().StringP("region", "r", "us-east-1", "set the AWS region")
-	rootCmd.PersistentFlags().StringP("model-id", "m", "anthropic.claude-instant-v1", "set the model id")
+	rootCmd.PersistentFlags().StringP("model-id", "m", "anthropic.claude-3-haiku-20240307-v1:0", "set the model id")
 
 	rootCmd.PersistentFlags().Float64("temperature", 1, "temperature setting")
 	rootCmd.PersistentFlags().Float64("topP", 0.999, "topP setting")
