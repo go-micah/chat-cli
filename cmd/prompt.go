@@ -294,6 +294,39 @@ var promptCmd = &cobra.Command{
 
 			// print streaming response
 			switch m.ModelFamily {
+			case "claude3":
+				var out providers.AnthropicClaudeMessagesInvokeModelOutput
+
+				stream := resp.GetStream().Reader
+				events := stream.Events()
+
+				for {
+					event := <-events
+					if event != nil {
+						if v, ok := event.(*types.ResponseStreamMemberChunk); ok {
+							// v has fields
+							err := json.Unmarshal([]byte(v.Value.Bytes), &out)
+							if err != nil {
+								log.Printf("unable to decode response:, %v", err)
+								continue
+							}
+							if out.Type == "content_block_delta" {
+								fmt.Printf("%v", out.Delta.Text)
+							}
+						} else if v, ok := event.(*types.UnknownUnionMember); ok {
+							// catchall
+							fmt.Print(v.Value)
+						}
+					} else {
+						break
+					}
+				}
+				stream.Close()
+
+				if stream.Err() != nil {
+					log.Fatalf("error from Bedrock, %v", stream.Err())
+				}
+				fmt.Println()
 			case "claude":
 				var out providers.AnthropicClaudeInvokeModelOutput
 
