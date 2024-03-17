@@ -102,3 +102,11 @@ There are several flags you can use to overide the default config settings. Not 
     --temperature defaults to 1
     --topP defaults to 0.999
     --topK defaults to 250
+
+## Anthropic Claude 3 Vision
+
+With the latest models from Anthropic, Claude 3 can now support uploading an image. Images can be either png or jpg and must be less than 5MB. To upload an image do the following:
+
+    $ ./bin/chat-cli prompt "Explain this image" --image IMG_1234.JPG
+
+Please note this only works with models from Anthropic Claude 3.
