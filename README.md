@@ -5,7 +5,7 @@ A little terminal based program that lets you interact with LLMs available via [
 ## Prerequisites
 
 1. You will need an [AWS account](https://aws.amazon.com)
-2. You will need to enable the LLMs you wish to use in Amazon Bedrock via the [Model Access](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/modelaccess) page in the AWS Console. The defualt LLMs for both Chat and Prompt commands are proivded by Anthropic, so it is recommended to enables these as a starting point.
+2. You will need to enable the LLMs you wish to use in Amazon Bedrock via the [Model Access](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/modelaccess) page in the AWS Console. The defualt LLMs for both Chat and Prompt commands are proivded by Anthropic, so it is recommended to enable these as a starting point.
 3. You will need to install the [AWS CLI](https://docs.aws.amazon.com/cli/) tool and run `aws config` from the command line to set up credentials.
 4. You will need [Go](https://go.dev) v1.22.1 installed on your system. You can type `go version` to ensure you have the correct version installed.
 
