@@ -4,11 +4,16 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"image/jpeg"
+	"image/png"
 	"io"
 	"log"
+	"net/http"
 	"os"
 
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -88,6 +93,20 @@ var promptCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("unable to get flag: %v", err)
 		}
+
+		image, err := cmd.PersistentFlags().GetString("image")
+		if err != nil {
+			log.Fatalf("unable to get flag: %v", err)
+		}
+
+		var encodedImage string
+		var mimeType string
+		var imagePrompt providers.AnthropicClaudeContent
+
+		if (image != "") && (m.ModelFamily != "claude3") {
+			log.Fatalf("model %s does not support vision. please use a different model", m.ModelID)
+		}
+
 		// serialize body
 		switch m.ModelFamily {
 		case "claude3":
@@ -95,13 +114,33 @@ var promptCmd = &cobra.Command{
 				Type: "text",
 				Text: prompt,
 			}
+
+			content := []providers.AnthropicClaudeContent{
+				textPrompt,
+			}
+
+			if image != "" {
+				encodedImage, mimeType, err = readImage(image)
+				if err != nil {
+					log.Fatalf("unable to read image: %v", err)
+				}
+				imagePrompt = providers.AnthropicClaudeContent{
+					Type: "image",
+					Source: &providers.AnthropicClaudeSource{
+						Type:      "base64",
+						MediaType: mimeType,
+						Data:      encodedImage,
+					},
+				}
+
+				content = append(content, imagePrompt)
+			}
+
 			body := providers.AnthropicClaudeMessagesInvokeModelInput{
 				Messages: []providers.AnthropicClaudeMessage{
 					{
-						Role: "user",
-						Content: []providers.AnthropicClaudeContent{
-							textPrompt,
-						},
+						Role:    "user",
+						Content: content,
 					},
 				},
 				MaxTokens:     maxTokens,
@@ -428,6 +467,43 @@ var promptCmd = &cobra.Command{
 	},
 }
 
+func readImage(filename string) (string, string, error) {
+
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		return "", "", err
+	}
+
+	//var base64Encoding string
+
+	// Determine the content type of the image file
+	mimeType := http.DetectContentType(data)
+
+	switch mimeType {
+	case "image/png":
+		fmt.Println("Image type is already PNG.")
+	case "image/jpeg":
+		img, err := jpeg.Decode(bytes.NewReader(data))
+		if err != nil {
+			return "", "", fmt.Errorf("unable to decode jpeg: %w", err)
+		}
+
+		var buf bytes.Buffer
+		if err := png.Encode(&buf, img); err != nil {
+			return "", "", fmt.Errorf("unable to encode png: %w", err)
+		}
+		data = buf.Bytes()
+	default:
+		return "", "", fmt.Errorf("unsupported content typo: %s", mimeType)
+	}
+
+	imgBase64Str := base64.StdEncoding.EncodeToString(data)
+	//r //eturn hdr.Filename, imgBase64Str, nil
+
+	// Print the full base64 representation of the image
+	return imgBase64Str, mimeType, nil
+}
+
 func init() {
 	rootCmd.AddCommand(promptCmd)
 
@@ -435,7 +511,7 @@ func init() {
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// promptCmd.PersistentFlags().StringP("model-id", "m", "anthropic.claude-instant-v1", "set the model id")
+	promptCmd.PersistentFlags().StringP("image", "i", "", "path to image")
 	promptCmd.PersistentFlags().Bool("no-stream", false, "return the full response once it has completed")
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:

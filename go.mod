@@ -5,7 +5,7 @@ go 1.22.0
 require (
 	github.com/aws/aws-sdk-go-v2/config v1.27.0
 	github.com/aws/aws-sdk-go-v2/service/bedrockruntime v1.6.0
-	github.com/go-micah/go-bedrock v0.1.5
+	github.com/go-micah/go-bedrock v0.1.7
 	github.com/mattn/go-isatty v0.0.20
 	github.com/spf13/cobra v1.8.0
 )
