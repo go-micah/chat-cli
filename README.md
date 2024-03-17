@@ -4,24 +4,30 @@ A little terminal based program that lets you interact with LLMs available via [
 
 ## Prerequisites
 
-1. You will need an AWS account
-2. You will need to enable the LLMs you wish to use in Amazon Bedrock
-3. You will need to run `aws config` from the command line to set up your default profile
-4. You will need Go installed on your system
+1. You will need an [AWS account](https://aws.amazon.com)
+2. You will need to enable the LLMs you wish to use in Amazon Bedrock via the [Model Access](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/modelaccess) page in the AWS Console. The defualt LLMs for both Chat and Prompt commands are proivded by Anthropic, so it is recommended to enables these as a starting point.
+3. You will need to install the [AWS CLI](https://docs.aws.amazon.com/cli/) tool and run `aws config` from the command line to set up credentials.
+4. You will need [Go[(tomorrow https://go.dev) v1.22.1 installed on your system. You can type `go version` to ensure you have the correct version installed.
 
-## Compile
+## Build
 
+To build the project from source, clone this repo to your local machine and use [Make](https://www.gnu.org/software/make/manual/make.html) to build the binary.
+
+    $ git clone git@github.com:go-micah/chat-cli.git
+    $ cd chat-cli
     $ make
 
 ## Run
+
+To run the program from within the same directory use the following command syntax.
 
     $ ./bin/chat-cli <command> <args> <flags>
 
 ## Help
 
-You can get help at anytime with the `--help` flag
+You can get help at anytime with the `--help` flag. Typing `--help` after any command will display args and flags available to that command.
 
-## Use
+## Commands
 
 There are currently two ways to interact with LLMs through this interface.
 
@@ -34,9 +40,13 @@ You can send a one liner prompt like this:
 
     $ ./bin/chat-cli prompt "How are you today?"
 
-You can also pipe in a file as part of your prompt like this:
+You can also read in a file from `stdin` as part of your prompt like this:
 
     $ cat myfile.go | ./bin/chat-cli prompt "explain this code"
+
+    or 
+
+    $ ./bin/chat-cli prompt "explain this code" < myfile.go
 
 This will add `<document></document>` tags arround your document ahead of your prompt. This syntax works especially well with [Anthropic Claude](https://www.anthropic.com/product). Other models may produce different results.
 
