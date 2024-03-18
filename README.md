@@ -7,9 +7,22 @@ A little terminal based program that lets you interact with LLMs available via [
 1. You will need an [AWS account](https://aws.amazon.com)
 2. You will need to enable the LLMs you wish to use in Amazon Bedrock via the [Model Access](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/modelaccess) page in the AWS Console. The defualt LLMs for both Chat and Prompt commands are proivded by Anthropic, so it is recommended to enable these as a starting point.
 3. You will need to install the [AWS CLI](https://docs.aws.amazon.com/cli/) tool and run `aws config` from the command line to set up credentials.
-4. You will need [Go](https://go.dev) v1.22.1 installed on your system. You can type `go version` to ensure you have the correct version installed.
 
-## Build
+## Installation
+
+At this time you can install chat-cli via pre-packaged binaries (thanks to [GoReleaser](https://goreleaser.com/)!) for your operating system/architecture combination of choice.
+
+1. Head to https://github.com/go-micah/chat-cli/releases/latest to find the binary for your setup.
+2. Download and unzip to find a pre-compiled binary file that should work on your system.
+
+Notes:
+- You won't need Go installed on your system to use the pre-packaged binaries.
+- These are currently unsigned binary files. For most systems, this will not be an issue, but on MacOS you will need to [follow these instructions](https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unidentified-developer-mh40616/mac). 
+
+
+## Build from source
+
+You will need [Go](https://go.dev) v1.22.1 installed on your system. You can type `go version` to ensure you have the correct version installed.
 
 To build the project from source, clone this repo to your local machine and use [Make](https://www.gnu.org/software/make/manual/make.html) to build the binary.
 
@@ -19,7 +32,7 @@ To build the project from source, clone this repo to your local machine and use 
 
 ## Run
 
-To run the program from within the same directory use the following command syntax.
+To run the program from within the same directory use the following command syntax. (If you downloaded a pre-packaged binary your path will be different.)
 
     $ ./bin/chat-cli <command> <args> <flags>
 
