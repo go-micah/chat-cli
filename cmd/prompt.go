@@ -481,8 +481,9 @@ func readImage(filename string) (string, string, error) {
 
 	switch mimeType {
 	case "image/png":
-		fmt.Println("Image type is already PNG.")
+		fmt.Println()
 	case "image/jpeg":
+		fmt.Println()
 		img, err := jpeg.Decode(bytes.NewReader(data))
 		if err != nil {
 			return "", "", fmt.Errorf("unable to decode jpeg: %w", err)
