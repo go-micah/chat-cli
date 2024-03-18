@@ -89,6 +89,11 @@ var imageCmd = &cobra.Command{
 			log.Fatalf("unable to get flag: %v", err)
 		}
 
+		filename, err := cmd.PersistentFlags().GetString("filename")
+		if err != nil {
+			log.Fatalf("unable to get flag: %v", err)
+		}
+
 		// serialize body
 		switch m.ModelFamily {
 		case "stability":
@@ -151,6 +156,11 @@ var imageCmd = &cobra.Command{
 
 			outputFile := fmt.Sprintf("%s-%d.jpg", m.ModelFamily, time.Now().Unix())
 
+			// if we have a filename set, us it instead
+			if filename != "" {
+				outputFile = filename
+			}
+
 			err = os.WriteFile(outputFile, decoded, 0644)
 			if err != nil {
 				log.Fatalf("error writing to file: %v", err)
@@ -176,6 +186,7 @@ func init() {
 	// is called directly, e.g.:
 	// imageCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	imageCmd.PersistentFlags().StringP("model-id", "m", "stability.stable-diffusion-xl-v1", "set the model id")
+	imageCmd.PersistentFlags().StringP("filename", "f", "", "provide an output filename")
 
 }
 

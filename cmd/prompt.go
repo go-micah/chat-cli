@@ -62,7 +62,7 @@ var promptCmd = &cobra.Command{
 		var bodyString []byte
 		var err error
 
-		modelId, err := cmd.Parent().PersistentFlags().GetString("model-id")
+		modelId, err := cmd.PersistentFlags().GetString("model-id")
 		if err != nil {
 			log.Fatalf("unable to get flag: %v", err)
 		}
@@ -74,22 +74,22 @@ var promptCmd = &cobra.Command{
 		}
 
 		// get options
-		temperature, err := cmd.Parent().PersistentFlags().GetFloat64("temperature")
+		temperature, err := cmd.PersistentFlags().GetFloat64("temperature")
 		if err != nil {
 			log.Fatalf("unable to get flag: %v", err)
 		}
 
-		topP, err := cmd.Parent().PersistentFlags().GetFloat64("topP")
+		topP, err := cmd.PersistentFlags().GetFloat64("topP")
 		if err != nil {
 			log.Fatalf("unable to get flag: %v", err)
 		}
 
-		topK, err := cmd.Parent().PersistentFlags().GetFloat64("topK")
+		topK, err := cmd.PersistentFlags().GetFloat64("topK")
 		if err != nil {
 			log.Fatalf("unable to get flag: %v", err)
 		}
 
-		maxTokens, err := cmd.Parent().PersistentFlags().GetInt("max-tokens")
+		maxTokens, err := cmd.PersistentFlags().GetInt("max-tokens")
 		if err != nil {
 			log.Fatalf("unable to get flag: %v", err)
 		}
@@ -512,8 +512,16 @@ func init() {
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
+	promptCmd.PersistentFlags().StringP("model-id", "m", "anthropic.claude-3-haiku-20240307-v1:0", "set the model id")
+
 	promptCmd.PersistentFlags().StringP("image", "i", "", "path to image")
 	promptCmd.PersistentFlags().Bool("no-stream", false, "return the full response once it has completed")
+
+	promptCmd.PersistentFlags().Float64("temperature", 1, "temperature setting")
+	promptCmd.PersistentFlags().Float64("topP", 0.999, "topP setting")
+	promptCmd.PersistentFlags().Float64("topK", 250, "topK setting")
+	promptCmd.PersistentFlags().Int("max-tokens", 500, "max tokens to sample")
+
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// promptCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
