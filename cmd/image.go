@@ -149,7 +149,7 @@ var imageCmd = &cobra.Command{
 				log.Fatalf("unable to decode image: %v", err)
 			}
 
-			outputFile := fmt.Sprintf("output-%d.jpg", time.Now().Unix())
+			outputFile := fmt.Sprintf("%s-%d.jpg", m.ModelFamily, time.Now().Unix())
 
 			err = os.WriteFile(outputFile, decoded, 0644)
 			if err != nil {
