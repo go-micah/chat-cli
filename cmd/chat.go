@@ -84,6 +84,9 @@ To quit the chat, just type "quit"
 		var bodyString []byte
 		var conversation string
 
+		// if we are using Claude 3 and the Messages API we will need this
+		var messages []providers.AnthropicClaudeMessage
+
 		accept := "*/*"
 		contentType := "application/json"
 
@@ -108,6 +111,36 @@ To quit the chat, just type "quit"
 
 			// serialize body
 			switch m.ModelFamily {
+			case "claude3":
+
+				textPrompt := providers.AnthropicClaudeContent{
+					Type: "text",
+					Text: prompt,
+				}
+
+				message := providers.AnthropicClaudeMessage{
+					Role: "user",
+					Content: []providers.AnthropicClaudeContent{
+						textPrompt,
+					},
+				}
+
+				messages = append(messages, message)
+
+				body := providers.AnthropicClaudeMessagesInvokeModelInput{
+					Messages:      messages,
+					MaxTokens:     maxTokens,
+					TopP:          topP,
+					TopK:          int(topK),
+					Temperature:   temperature,
+					StopSequences: []string{},
+				}
+
+				bodyString, err = json.Marshal(body)
+				if err != nil {
+					log.Fatalf("unable to marshal body: %v", err)
+				}
+
 			case "claude":
 				conversation = conversation + " \\n\\nHuman: " + prompt
 
@@ -173,6 +206,55 @@ To quit the chat, just type "quit"
 
 			// print streaming response
 			switch m.ModelFamily {
+			case "claude3":
+				var out providers.AnthropicClaudeMessagesInvokeModelOutput
+
+				stream := resp.GetStream().Reader
+				events := stream.Events()
+
+				for {
+					event := <-events
+					if event != nil {
+						if v, ok := event.(*types.ResponseStreamMemberChunk); ok {
+							// v has fields
+							err := json.Unmarshal([]byte(v.Value.Bytes), &out)
+							if err != nil {
+								log.Printf("unable to decode response:, %v", err)
+								continue
+							}
+							if out.Type == "content_block_delta" {
+								fmt.Printf("%v", out.Delta.Text)
+								chunks = chunks + out.Delta.Text
+							}
+						} else if v, ok := event.(*types.UnknownUnionMember); ok {
+							// catchall
+							fmt.Print(v.Value)
+						}
+					} else {
+						break
+					}
+				}
+				stream.Close()
+
+				if stream.Err() != nil {
+					log.Fatalf("error from Bedrock, %v", stream.Err())
+				}
+				fmt.Println()
+
+				textPrompt := providers.AnthropicClaudeContent{
+					Type: "text",
+					Text: chunks,
+				}
+
+				message := providers.AnthropicClaudeMessage{
+					Role: "assistant",
+					Content: []providers.AnthropicClaudeContent{
+						textPrompt,
+					},
+				}
+
+				messages = append(messages, message)
+
 			case "claude":
 				var out providers.AnthropicClaudeInvokeModelOutput
 
@@ -296,7 +378,7 @@ func init() {
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
 	// chatCmd.PersistentFlags().String("foo", "", "A help for foo")
-	chatCmd.PersistentFlags().StringP("model-id", "m", "anthropic.claude-instant-v1", "set the model id")
+	chatCmd.PersistentFlags().StringP("model-id", "m", "anthropic.claude-3-haiku-20240307-v1:0", "set the model id")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
