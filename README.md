@@ -42,10 +42,11 @@ You can get help at anytime with the `--help` flag. Typing `--help` after any co
 
 ## Commands
 
-There are currently two ways to interact with LLMs through this interface.
+There are currently three ways to interact with foundation models through this interface.
 
-1. Send a single prompt from the command line using the `prompt` command
-2. Start an interactive chat using the `chat` command
+1. Send a single prompt to an LLM from the command line using the `prompt` command
+2. Start an interactive chat with an LLM using the `chat` command
+3. Generate an image with the `image` command
 
 ## Prompt
 
@@ -133,3 +134,20 @@ With the latest models from Anthropic, Claude 3 can now support uploading an ima
     $ ./bin/chat-cli prompt "Explain this image" --image IMG_1234.JPG
 
 Please note this only works with models from Anthropic Claude 3.
+
+## Image
+
+With the `image` command you can generate images with any supported Foundation Model. Simply follow the syntax below:
+
+    $./bin/chat-cli image "Generate an image of a cat eating cereal"
+
+You can specify the model with the `--model-id` flag set to model's full model id or family name.
+You can also specify an output filename with the `--filename` flag. 
+
+## Image Models
+
+| Provider  | Model ID                      | Family Name  | Base Model |
+|-----------|-------------------------------|-------------|-------------------|
+| Stability AI | stability.stable-diffusion-xl-v1   | stability       | yes   |
+| Stability AI | stability.stable-diffusion-xl-v0   | stability     | |
+| Amazon | amazon.titan-image-generator-v1   | titan-image     |yes |
