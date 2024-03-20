@@ -48,22 +48,22 @@ To quit the chat, just type "quit"
 		}
 
 		// get options
-		temperature, err := cmd.Parent().PersistentFlags().GetFloat64("temperature")
+		temperature, err := cmd.PersistentFlags().GetFloat64("temperature")
 		if err != nil {
 			log.Fatalf("unable to get flag: %v", err)
 		}
 
-		topP, err := cmd.Parent().PersistentFlags().GetFloat64("topP")
+		topP, err := cmd.PersistentFlags().GetFloat64("topP")
 		if err != nil {
 			log.Fatalf("unable to get flag: %v", err)
 		}
 
-		topK, err := cmd.Parent().PersistentFlags().GetFloat64("topK")
+		topK, err := cmd.PersistentFlags().GetFloat64("topK")
 		if err != nil {
 			log.Fatalf("unable to get flag: %v", err)
 		}
 
-		maxTokens, err := cmd.Parent().PersistentFlags().GetInt("max-tokens")
+		maxTokens, err := cmd.PersistentFlags().GetInt("max-tokens")
 		if err != nil {
 			log.Fatalf("unable to get flag: %v", err)
 		}
@@ -379,6 +379,11 @@ func init() {
 	// and all subcommands, e.g.:
 	// chatCmd.PersistentFlags().String("foo", "", "A help for foo")
 	chatCmd.PersistentFlags().StringP("model-id", "m", "anthropic.claude-3-haiku-20240307-v1:0", "set the model id")
+
+	chatCmd.PersistentFlags().Float64("temperature", 1, "temperature setting")
+	chatCmd.PersistentFlags().Float64("topP", 0.999, "topP setting")
+	chatCmd.PersistentFlags().Float64("topK", 250, "topK setting")
+	chatCmd.PersistentFlags().Int("max-tokens", 500, "max tokens to sample")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:

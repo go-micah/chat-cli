@@ -105,6 +105,27 @@ var models = []Model{
 		BaseModel:         false,
 		SupportsStreaming: false,
 	},
+	{
+		ModelID:           "amazon.titan-image-generator-v1",
+		ModelFamily:       "titan-image",
+		ModelType:         "image",
+		BaseModel:         true,
+		SupportsStreaming: false,
+	},
+	{
+		ModelID:           "stability.stable-diffusion-xl-v1",
+		ModelFamily:       "stability",
+		ModelType:         "image",
+		BaseModel:         true,
+		SupportsStreaming: false,
+	},
+	{
+		ModelID:           "stability.stable-diffusion-xl-v0",
+		ModelFamily:       "stability",
+		ModelType:         "image",
+		BaseModel:         false,
+		SupportsStreaming: false,
+	},
 }
 
 func GetModel(modelId string) (Model, error) {
