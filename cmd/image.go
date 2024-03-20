@@ -112,6 +112,23 @@ var imageCmd = &cobra.Command{
 			if err != nil {
 				log.Fatalf("unable to marshal body: %v", err)
 			}
+		case "titan-image":
+			body := providers.AmazonTitanImageInvokeModelInput{
+				TaskType: "TEXT_IMAGE",
+				TextToImageParams: providers.AmazonTitanImageInvokeModelInputTextToImageParams{
+					Text: prompt,
+				},
+				ImageGenerationConfig: providers.AmazonTitanImageInvokeModelInputImageGenerationConfig{
+					NumberOfImages: 1,
+					Scale:          scale,
+					Seed:           seed,
+				},
+			}
+
+			bodyString, err = json.Marshal(body)
+			if err != nil {
+				log.Fatalf("unable to marshal body: %v", err)
+			}
 		default:
 			log.Fatalf("invalid model: %s", m.ModelID)
 		}
@@ -150,6 +167,32 @@ var imageCmd = &cobra.Command{
 			}
 
 			decoded, err := decodeImage(out.Artifacts[0].Base64)
+			if err != nil {
+				log.Fatalf("unable to decode image: %v", err)
+			}
+
+			outputFile := fmt.Sprintf("%s-%d.jpg", m.ModelFamily, time.Now().Unix())
+
+			// if we have a filename set, us it instead
+			if filename != "" {
+				outputFile = filename
+			}
+
+			err = os.WriteFile(outputFile, decoded, 0644)
+			if err != nil {
+				log.Fatalf("error writing to file: %v", err)
+			}
+
+			log.Println("image written to file", outputFile)
+		case "titan-image":
+			var out providers.AmazonTitanImageInvokeModelOutput
+
+			err = json.Unmarshal(resp.Body, &out)
+			if err != nil {
+				log.Fatalf("unable to unmarshal response from Bedrock: %v", err)
+			}
+
+			decoded, err := decodeImage(out.Images[0])
 			if err != nil {
 				log.Fatalf("unable to decode image: %v", err)
 			}

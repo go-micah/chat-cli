@@ -106,6 +106,13 @@ var models = []Model{
 		SupportsStreaming: false,
 	},
 	{
+		ModelID:           "amazon.titan-image-generator-v1",
+		ModelFamily:       "titan-image",
+		ModelType:         "image",
+		BaseModel:         true,
+		SupportsStreaming: false,
+	},
+	{
 		ModelID:           "stability.stable-diffusion-xl-v1",
 		ModelFamily:       "stability",
 		ModelType:         "image",

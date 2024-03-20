@@ -29,8 +29,8 @@ github.com/aws/aws-sdk-go-v2/service/sts v1.28.4/go.mod h1:+K1rNPVyGxkRuv9NNiaZ4
 github.com/aws/smithy-go v1.20.1 h1:4SZlSlMr36UEqC7XOyRVb27XMeZubNcBNN+9IgEPIQw=
 github.com/aws/smithy-go v1.20.1/go.mod h1:krry+ya/rV9RDcV/Q16kpu6ypI4K2czasz0NC3qS14E=
 github.com/cpuguy83/go-md2man/v2 v2.0.3/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
-github.com/go-micah/go-bedrock v0.1.9 h1:19we0WtuALMC8HVwT0k26ptpBcnzgCFKzva7wVTN2Hc=
-github.com/go-micah/go-bedrock v0.1.9/go.mod h1:2h5MwPzG4zDkBxugMQrAvwAALw6ezefrVh+h9tI9Vek=
+github.com/go-micah/go-bedrock v0.1.10 h1:Kz7euvlMspZNJVAkrP2cx5cRyQbnadJ9ibiXMOW8m04=
+github.com/go-micah/go-bedrock v0.1.10/go.mod h1:2h5MwPzG4zDkBxugMQrAvwAALw6ezefrVh+h9tI9Vek=
 github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2s0bqwp9tc8=
 github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
 github.com/mattn/go-isatty v0.0.20 h1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWEY=
