@@ -8,6 +8,21 @@ A little terminal based program that lets you interact with LLMs available via [
 2. You will need to enable the LLMs you wish to use in Amazon Bedrock via the [Model Access](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/modelaccess) page in the AWS Console. The defualt LLMs for both Chat and Prompt commands are proivded by Anthropic, so it is recommended to enable these as a starting point.
 3. You will need to install the [AWS CLI](https://docs.aws.amazon.com/cli/) tool and run `aws config` from the command line to set up credentials.
 
+## Local Quickstart
+
+    git clone git@github.com:go-micah/chat-cli.git
+    cd chat-cli
+    go run . prompt "Explain this code" < cmd/prompt.go
+
+Example output (this will change, as LLMs generate new responses with every request):
+
+> This code is a Cobra-based command-line interface (CLI) application that allows users to send prompts to an Amazon Bedrock Large Language Model (LLM). The application supports several different LLM models, including Anthropic's Claude, AI21 Labs' Jurassic, Cohere's Command, Meta's LLaMA, and Amazon's Titan.
+>
+> The main functionality is in the `promptCmd` Cobra command, which has the following features:
+>
+> 1. **Prompt Handling**: The command can accept a prompt as a command-line argument, and it can also read a document from the standard input (STDIN) and prepend it to the prompt.
+>    ...
+
 ## Installation
 
 At this time you can install chat-cli via pre-packaged binaries (thanks to [GoReleaser](https://goreleaser.com/)!) for your operating system/architecture combination of choice.
@@ -16,9 +31,9 @@ At this time you can install chat-cli via pre-packaged binaries (thanks to [GoRe
 2. Download and unzip to find a pre-compiled binary file that should work on your system.
 
 Notes:
-- You won't need Go installed on your system to use the pre-packaged binaries.
-- These are currently unsigned binary files. For most systems, this will not be an issue, but on MacOS you will need to [follow these instructions](https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unidentified-developer-mh40616/mac). 
 
+- You won't need Go installed on your system to use the pre-packaged binaries.
+- These are currently unsigned binary files. For most systems, this will not be an issue, but on MacOS you will need to [follow these instructions](https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unidentified-developer-mh40616/mac).
 
 ## Build from source
 
@@ -58,7 +73,7 @@ You can also read in a file from `stdin` as part of your prompt like this:
 
     $ cat myfile.go | ./bin/chat-cli prompt "explain this code"
 
-    or 
+    or
 
     $ ./bin/chat-cli prompt "explain this code" < myfile.go
 
@@ -76,29 +91,27 @@ You can start an interactive chat session like this:
 
 ## LLMs
 
-Currently all text based LLMs available through Amazon Bedrock are supported. The LLMs you wish to use must be enabled within Amazon Bedrock. 
+Currently all text based LLMs available through Amazon Bedrock are supported. The LLMs you wish to use must be enabled within Amazon Bedrock.
 
-The default LLM is Anthropic Claude Instant v1. 
+The default LLM is Anthropic Claude Instant v1.
 
 To switch LLMs, use the `--model-id` flag. You can supply a valid model id from the following list of currently supported models:
 
-| Provider  | Model ID                      | Family Name | Streaming Capable | Base Model |
-|-----------|-------------------------------|-------------|-------------------|------------|
-| Anthropic | anthropic.claude-3-haiku-20240307-v1:0   | claude3      | yes               | yes        |
-| Anthropic | anthropic.claude-3-sonnet-20240229-v1:0   | claude3      | yes               | no        |
-| Anthropic | anthropic.claude-v2:1         | claude      | yes               |            |
-| Anthropic | anthropic.claude-v2           | claude      | yes               |            |
-| Anthropic | anthropic.claude-instant-v1   | claude      | yes               | yes        |
-| Cohere    | cohere.command-light-text-v14 | command     | yes               | yes        |
-| Cohere    | cohere.command-text-v14       | command     | yes               |            |
-| Amazon    | amazon.titan-text-lite-v1     | titan       | not yet           | yes        |
-| Amazon    | amazon.titan-text-express-v1  | titan       | not yet           |            |
-| AI21 Labs | ai21.j2-mid-v1                | jurassic    | no                | yes        |
-| AI21 Labs | ai21.j2-ultra-v1              | jurassic    | no                |            |
-| Meta      | meta.llama2-13b-chat-v1       | llama       | yes               | yes        |
-| Meta      | meta.llama2-70b-chat-v1       | llama       | yes               |            |
-
-
+| Provider  | Model ID                                | Family Name | Streaming Capable | Base Model |
+| --------- | --------------------------------------- | ----------- | ----------------- | ---------- |
+| Anthropic | anthropic.claude-3-haiku-20240307-v1:0  | claude3     | yes               | yes        |
+| Anthropic | anthropic.claude-3-sonnet-20240229-v1:0 | claude3     | yes               | no         |
+| Anthropic | anthropic.claude-v2:1                   | claude      | yes               |            |
+| Anthropic | anthropic.claude-v2                     | claude      | yes               |            |
+| Anthropic | anthropic.claude-instant-v1             | claude      | yes               | yes        |
+| Cohere    | cohere.command-light-text-v14           | command     | yes               | yes        |
+| Cohere    | cohere.command-text-v14                 | command     | yes               |            |
+| Amazon    | amazon.titan-text-lite-v1               | titan       | not yet           | yes        |
+| Amazon    | amazon.titan-text-express-v1            | titan       | not yet           |            |
+| AI21 Labs | ai21.j2-mid-v1                          | jurassic    | no                | yes        |
+| AI21 Labs | ai21.j2-ultra-v1                        | jurassic    | no                |            |
+| Meta      | meta.llama2-13b-chat-v1                 | llama       | yes               | yes        |
+| Meta      | meta.llama2-70b-chat-v1                 | llama       | yes               |            |
 
 You can supply the exact model id from the list above like so:
 
@@ -116,7 +129,7 @@ You can disable streaming like this:
 
     $ ./bin/chat-cli prompt "What is event driven architecture?" --no-stream
 
-Only streaming response capable models can be used with the `chat` command. 
+Only streaming response capable models can be used with the `chat` command.
 
 ## Model Config
 
@@ -142,12 +155,12 @@ With the `image` command you can generate images with any supported Foundation M
     $./bin/chat-cli image "Generate an image of a cat eating cereal"
 
 You can specify the model with the `--model-id` flag set to model's full model id or family name.
-You can also specify an output filename with the `--filename` flag. 
+You can also specify an output filename with the `--filename` flag.
 
 ## Image Models
 
-| Provider  | Model ID                      | Family Name  | Base Model |
-|-----------|-------------------------------|-------------|-------------------|
-| Stability AI | stability.stable-diffusion-xl-v1   | stability       | yes   |
-| Stability AI | stability.stable-diffusion-xl-v0   | stability     | |
-| Amazon | amazon.titan-image-generator-v1   | titan-image     |yes |
+| Provider     | Model ID                         | Family Name | Base Model |
+| ------------ | -------------------------------- | ----------- | ---------- |
+| Stability AI | stability.stable-diffusion-xl-v1 | stability   | yes        |
+| Stability AI | stability.stable-diffusion-xl-v0 | stability   |            |
+| Amazon       | amazon.titan-image-generator-v1  | titan-image | yes        |
