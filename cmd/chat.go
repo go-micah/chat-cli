@@ -169,7 +169,7 @@ To quit the chat, just type "quit"
 					TopK:              topK,
 					MaxTokensToSample: maxTokens,
 					StopSequences:     []string{`""`},
-					ReturnLiklihoods:  "NONE",
+					ReturnLikelihoods: "NONE",
 					NumGenerations:    1,
 				}
 				bodyString, err = json.Marshal(body)

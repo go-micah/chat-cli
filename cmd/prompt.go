@@ -190,7 +190,7 @@ var promptCmd = &cobra.Command{
 				TopK:              topK,
 				MaxTokensToSample: maxTokens,
 				StopSequences:     []string{`""`},
-				ReturnLiklihoods:  "NONE",
+				ReturnLikelihoods: "NONE",
 				NumGenerations:    1,
 			}
 			bodyString, err = json.Marshal(body)
