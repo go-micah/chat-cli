@@ -1,4 +1,4 @@
-# chat-cli
+# 💬 chat-cli 💬
 
 A little terminal based program that lets you interact with LLMs available via [Amazon Bedrock](https://aws.amazon.com/bedrock).
 
