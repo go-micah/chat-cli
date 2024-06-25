@@ -5,10 +5,10 @@ A little terminal based program that lets you interact with LLMs available via [
 ## Prerequisites
 
 1. You will need an [AWS account](https://aws.amazon.com)
-2. You will need to enable the LLMs you wish to use in Amazon Bedrock via the [Model Access](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/modelaccess) page in the AWS Console. The defualt LLMs for both Chat and Prompt commands are proivded by Anthropic, so it is recommended to enable these as a starting point.
+2. You will need to enable the LLMs you wish to use in Amazon Bedrock via the [Model Access](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/modelaccess) page in the AWS Console. The default LLMs for both Chat and Prompt commands are provided by Anthropic, so it is recommended to enable these as a starting point.
 3. You will need to install the [AWS CLI](https://docs.aws.amazon.com/cli/) tool and run `aws config` from the command line to set up credentials.
 
-## Local Quickstart
+## Local quick start
 
     git clone git@github.com:go-micah/chat-cli.git
     cd chat-cli
@@ -39,7 +39,7 @@ Notes:
 
 You will need [Go](https://go.dev) v1.22.1 installed on your system. You can type `go version` to ensure you have the correct version installed.
 
-To build the project from source, clone this repo to your local machine and use [Make](https://www.gnu.org/software/make/manual/make.html) to build the binary.
+To build the project from source, clone this repository to your local machine and use [Make](https://www.gnu.org/software/make/manual/make.html) to build the binary.
 
     $ git clone git@github.com:go-micah/chat-cli.git
     $ cd chat-cli
@@ -77,7 +77,7 @@ You can also read in a file from `stdin` as part of your prompt like this:
 
     $ ./bin/chat-cli prompt "explain this code" < myfile.go
 
-This will add `<document></document>` tags arround your document ahead of your prompt. This syntax works especially well with [Anthropic Claude](https://www.anthropic.com/product). Other models may produce different results.
+This will add `<document></document>` tags around your document ahead of your prompt. This syntax works especially well with [Anthropic Claude](https://www.anthropic.com/product). Other models may produce different results.
 
 ## Chat
 
@@ -123,7 +123,7 @@ Or, you can use the `Family Name` as a shortcut. Using the Family Name will sele
 
 ## Streaming Response
 
-By default, responses will stream to the command line as they are generated. This can be dissabled using the `--no-stream` flag with the prompt command. Not all models offer a streaming response capability.
+By default, responses will stream to the command line as they are generated. This can be disabled using the `--no-stream` flag with the prompt command. Not all models offer a streaming response capability.
 
 You can disable streaming like this:
 
@@ -133,7 +133,7 @@ Only streaming response capable models can be used with the `chat` command.
 
 ## Model Config
 
-There are several flags you can use to overide the default config settings. Not all config settings are used by each model.
+There are several flags you can use to override the default config settings. Not all config settings are used by each model.
 
     --max-tokens defaults to 500
     --temperature defaults to 1
