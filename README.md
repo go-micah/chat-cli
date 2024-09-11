@@ -101,6 +101,7 @@ To switch LLMs, use the `--model-id` flag. You can supply a valid model id from 
 | --------- | --------------------------------------- | ----------- | ----------------- | ---------- |
 | Anthropic | anthropic.claude-3-haiku-20240307-v1:0  | claude3     | yes               | yes        |
 | Anthropic | anthropic.claude-3-sonnet-20240229-v1:0 | claude3     | yes               | no         |
+| Anthropic | anthropic.claude-3-5-sonnet-20240620-v1:0 | claude3   | yes               | no         |
 | Anthropic | anthropic.claude-v2:1                   | claude      | yes               |            |
 | Anthropic | anthropic.claude-v2                     | claude      | yes               |            |
 | Anthropic | anthropic.claude-instant-v1             | claude      | yes               | yes        |
