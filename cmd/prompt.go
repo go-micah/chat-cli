@@ -4,23 +4,19 @@ Copyright © 2024 Micah Walter
 package cmd
 
 import (
-	"bytes"
 	"context"
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
-	"image/jpeg"
-	"image/png"
 	"io"
 	"log"
-	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime/types"
 	"github.com/go-micah/chat-cli/models"
-	"github.com/go-micah/go-bedrock/providers"
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 )
@@ -56,12 +52,7 @@ var promptCmd = &cobra.Command{
 			prompt = document + prompt
 		}
 
-		accept := "*/*"
-		contentType := "application/json"
-
-		var bodyString []byte
-		var err error
-
+		// get model id
 		modelId, err := cmd.PersistentFlags().GetString("model-id")
 		if err != nil {
 			log.Fatalf("unable to get flag: %v", err)
@@ -73,161 +64,16 @@ var promptCmd = &cobra.Command{
 			log.Fatalf("error: %v", err)
 		}
 
-		// get options
-		temperature, err := cmd.PersistentFlags().GetFloat64("temperature")
-		if err != nil {
-			log.Fatalf("unable to get flag: %v", err)
-		}
-
-		topP, err := cmd.PersistentFlags().GetFloat64("topP")
-		if err != nil {
-			log.Fatalf("unable to get flag: %v", err)
-		}
-
-		topK, err := cmd.PersistentFlags().GetFloat64("topK")
-		if err != nil {
-			log.Fatalf("unable to get flag: %v", err)
-		}
-
-		maxTokens, err := cmd.PersistentFlags().GetInt("max-tokens")
-		if err != nil {
-			log.Fatalf("unable to get flag: %v", err)
-		}
-
+		// get feature floag for image attachment
 		image, err := cmd.PersistentFlags().GetString("image")
 		if err != nil {
 			log.Fatalf("unable to get flag: %v", err)
 		}
 
-		var encodedImage string
-		var mimeType string
-		var imagePrompt providers.AnthropicClaudeContent
-
+		// check if model supports image/vision capabilities
+		// currently only claude3 models support vision capabilities
 		if (image != "") && (m.ModelFamily != "claude3") {
 			log.Fatalf("model %s does not support vision. please use a different model", m.ModelID)
-		}
-
-		// serialize body
-		switch m.ModelFamily {
-		case "claude3":
-			textPrompt := providers.AnthropicClaudeContent{
-				Type: "text",
-				Text: prompt,
-			}
-
-			content := []providers.AnthropicClaudeContent{
-				textPrompt,
-			}
-
-			if image != "" {
-				encodedImage, mimeType, err = readImage(image)
-				if err != nil {
-					log.Fatalf("unable to read image: %v", err)
-				}
-				imagePrompt = providers.AnthropicClaudeContent{
-					Type: "image",
-					Source: &providers.AnthropicClaudeSource{
-						Type:      "base64",
-						MediaType: mimeType,
-						Data:      encodedImage,
-					},
-				}
-
-				content = append(content, imagePrompt)
-			}
-
-			body := providers.AnthropicClaudeMessagesInvokeModelInput{
-				Messages: []providers.AnthropicClaudeMessage{
-					{
-						Role:    "user",
-						Content: content,
-					},
-				},
-				MaxTokens:     maxTokens,
-				TopP:          topP,
-				TopK:          int(topK),
-				Temperature:   temperature,
-				StopSequences: []string{},
-			}
-
-			bodyString, err = json.Marshal(body)
-			if err != nil {
-				log.Fatalf("unable to marshal body: %v", err)
-			}
-		case "claude":
-			body := providers.AnthropicClaudeInvokeModelInput{
-				Prompt:            "Human: \n\nHuman: " + prompt + "\n\nAssistant:",
-				MaxTokensToSample: maxTokens,
-				Temperature:       temperature,
-				TopK:              int(topK),
-				TopP:              topP,
-				StopSequences: []string{
-					"\n\nHuman:",
-				},
-			}
-
-			bodyString, err = json.Marshal(body)
-			if err != nil {
-				log.Fatalf("unable to marshal body: %v", err)
-			}
-		case "jurassic":
-			body := providers.AI21LabsJurassicInvokeModelInput{
-				Prompt:            prompt,
-				Temperature:       temperature,
-				TopP:              topP,
-				MaxTokensToSample: maxTokens,
-				StopSequences:     []string{`""`},
-			}
-			bodyString, err = json.Marshal(body)
-			if err != nil {
-				log.Fatalf("unable to marshal body: %v", err)
-			}
-		case "command":
-			body := providers.CohereCommandInvokeModelInput{
-				Prompt:            prompt,
-				Temperature:       temperature,
-				TopP:              topP,
-				TopK:              topK,
-				MaxTokensToSample: maxTokens,
-				StopSequences:     []string{`""`},
-				ReturnLikelihoods: "NONE",
-				NumGenerations:    1,
-			}
-			bodyString, err = json.Marshal(body)
-			if err != nil {
-				log.Fatalf("unable to marshal body: %v", err)
-			}
-		case "llama":
-			body := providers.MetaLlamaInvokeModelInput{
-				Prompt:            prompt,
-				Temperature:       temperature,
-				TopP:              topP,
-				MaxTokensToSample: maxTokens,
-			}
-			bodyString, err = json.Marshal(body)
-			if err != nil {
-				log.Fatalf("unable to marshal body: %v", err)
-			}
-		case "titan":
-			config := providers.AmazonTitanTextGenerationConfig{
-				Temperature:       temperature,
-				TopP:              topP,
-				MaxTokensToSample: maxTokens,
-				StopSequences: []string{
-					"User:",
-				},
-			}
-
-			body := providers.AmazonTitanTextInvokeModelInput{
-				Prompt: prompt,
-				Config: config,
-			}
-			bodyString, err = json.Marshal(body)
-			if err != nil {
-				log.Fatalf("unable to marshal body: %v", err)
-			}
-		default:
-			log.Fatalf("invalid model: %s", m.ModelID)
 		}
 
 		// set up connection to AWS
@@ -254,275 +100,177 @@ var promptCmd = &cobra.Command{
 			log.Fatalf("model %s does not support streaming. please use the --no-stream flag", m.ModelID)
 		}
 
+		// craft prompt
+		userMsg := types.Message{
+			Role: types.ConversationRoleUser,
+			Content: []types.ContentBlock{
+				&types.ContentBlockMemberText{
+					Value: prompt,
+				},
+			},
+		}
+
+		// attach image if we have one
+		if image != "" {
+			imageBytes, imageType, err := readImage(image)
+			if err != nil {
+				log.Fatalf("unable to read image: %v", err)
+			}
+
+			userMsg.Content = append(userMsg.Content, &types.ContentBlockMemberImage{
+				Value: types.ImageBlock{
+					Format: types.ImageFormat(imageType),
+					Source: &types.ImageSourceMemberBytes{
+						Value: imageBytes,
+					},
+				},
+			})
+
+		}
+
 		if noStream {
+			// set up ConverseInput with model and prompt
+			converseInput := &bedrockruntime.ConverseInput{
+				ModelId: aws.String(m.ModelID),
+			}
+			converseInput.Messages = append(converseInput.Messages, userMsg)
+
 			// invoke and wait for full response
-			resp, err := svc.InvokeModel(context.TODO(), &bedrockruntime.InvokeModelInput{
-				Accept:      &accept,
-				ModelId:     &m.ModelID,
-				ContentType: &contentType,
-				Body:        bodyString,
-			})
+			output, err := svc.Converse(context.TODO(), converseInput)
 			if err != nil {
 				log.Fatalf("error from Bedrock, %v", err)
 			}
 
-			// print response
-			switch m.ModelFamily {
-			case "claude3":
-				var out providers.AnthropicClaudeMessagesInvokeModelOutput
+			reponse, _ := output.Output.(*types.ConverseOutputMemberMessage)
+			responseContentBlock := reponse.Value.Content[0]
+			text, _ := responseContentBlock.(*types.ContentBlockMemberText)
 
-				err = json.Unmarshal(resp.Body, &out)
-				if err != nil {
-					log.Fatalf("unable to unmarshal response from Bedrock: %v", err)
-				}
-				fmt.Println(out.Content[0].Text)
-			case "claude":
-				var out providers.AnthropicClaudeInvokeModelOutput
+			fmt.Println(text.Value)
 
-				err = json.Unmarshal(resp.Body, &out)
-				if err != nil {
-					log.Fatalf("unable to unmarshal response from Bedrock: %v", err)
-				}
-				fmt.Println(out.Completion)
-			case "jurassic":
-				var out providers.AI21LabsJurrasicInvokeModelOutput
-
-				err = json.Unmarshal(resp.Body, &out)
-				if err != nil {
-					log.Fatalf("unable to unmarshal response from Bedrock: %v", err)
-				}
-				fmt.Println(out.Completions[0].Data.Text)
-			case "command":
-				var out providers.CohereCommandInvokeModelOutput
-
-				err = json.Unmarshal(resp.Body, &out)
-				if err != nil {
-					log.Fatalf("unable to unmarshal response from Bedrock: %v", err)
-				}
-				fmt.Println(out.Generations[0].Text)
-			case "llama":
-				var out providers.MetaLlamaInvokeModelOutput
-
-				err = json.Unmarshal(resp.Body, &out)
-				if err != nil {
-					log.Fatalf("unable to unmarshal response from Bedrock: %v", err)
-				}
-				fmt.Println(out.Generation)
-			case "titan":
-				var out providers.AmazonTitanTextInvokeModelOutput
-
-				err = json.Unmarshal(resp.Body, &out)
-				if err != nil {
-					log.Fatalf("unable to unmarshal response from Bedrock: %v", err)
-				}
-				fmt.Println(out.Results[0].OutputText)
-			default:
-				log.Fatalf("invalid model: %s", m.ModelID)
-			}
 		} else {
+			converseStreamInput := &bedrockruntime.ConverseStreamInput{
+				ModelId: aws.String(m.ModelID),
+			}
+			converseStreamInput.Messages = append(converseStreamInput.Messages, userMsg)
+
 			// invoke with streaming response
-			resp, err := svc.InvokeModelWithResponseStream(context.TODO(), &bedrockruntime.InvokeModelWithResponseStreamInput{
-				Accept:      &accept,
-				ModelId:     &m.ModelID,
-				ContentType: &contentType,
-				Body:        bodyString,
-			})
+			output, err := svc.ConverseStream(context.Background(), converseStreamInput)
 			if err != nil {
 				log.Fatalf("error from Bedrock, %v", err)
 			}
 
-			// print streaming response
-			switch m.ModelFamily {
-			case "claude3":
-				var out providers.AnthropicClaudeMessagesInvokeModelOutput
-
-				stream := resp.GetStream().Reader
-				events := stream.Events()
-
-				for {
-					event := <-events
-					if event != nil {
-						if v, ok := event.(*types.ResponseStreamMemberChunk); ok {
-							// v has fields
-							err := json.Unmarshal([]byte(v.Value.Bytes), &out)
-							if err != nil {
-								log.Printf("unable to decode response:, %v", err)
-								continue
-							}
-							if out.Type == "content_block_delta" {
-								fmt.Printf("%v", out.Delta.Text)
-							}
-						} else if v, ok := event.(*types.UnknownUnionMember); ok {
-							// catchall
-							fmt.Print(v.Value)
-						}
-					} else {
-						break
-					}
-				}
-				stream.Close()
-
-				if stream.Err() != nil {
-					log.Fatalf("error from Bedrock, %v", stream.Err())
-				}
-				fmt.Println()
-			case "claude":
-				var out providers.AnthropicClaudeInvokeModelOutput
-
-				stream := resp.GetStream().Reader
-				events := stream.Events()
-
-				for {
-					event := <-events
-					if event != nil {
-						if v, ok := event.(*types.ResponseStreamMemberChunk); ok {
-							// v has fields
-							err := json.Unmarshal([]byte(v.Value.Bytes), &out)
-							if err != nil {
-								log.Printf("unable to decode response:, %v", err)
-								continue
-							}
-							fmt.Printf("%v", out.Completion)
-						} else if v, ok := event.(*types.UnknownUnionMember); ok {
-							// catchall
-							fmt.Print(v.Value)
-						}
-					} else {
-						break
-					}
-				}
-				stream.Close()
-
-				if stream.Err() != nil {
-					log.Fatalf("error from Bedrock, %v", stream.Err())
-				}
-				fmt.Println()
-			case "command":
-				var out providers.CohereCommandInvokeModelOutput
-
-				stream := resp.GetStream().Reader
-				events := stream.Events()
-
-				for {
-					event := <-events
-					if event != nil {
-						if v, ok := event.(*types.ResponseStreamMemberChunk); ok {
-							// v has fields
-							err := json.Unmarshal([]byte(v.Value.Bytes), &out)
-							if err != nil {
-								log.Printf("unable to decode response:, %v", err)
-								continue
-							}
-							fmt.Printf("%v", out.Generations[0].Text)
-						} else if v, ok := event.(*types.UnknownUnionMember); ok {
-							// catchall
-							fmt.Print(v.Value)
-						}
-					} else {
-						break
-					}
-				}
-				stream.Close()
-
-				if stream.Err() != nil {
-					log.Fatalf("error from Bedrock, %v", stream.Err())
-				}
-				fmt.Println()
-			case "llama":
-				var out providers.MetaLlamaInvokeModelOutput
-
-				stream := resp.GetStream().Reader
-				events := stream.Events()
-
-				for {
-					event := <-events
-					if event != nil {
-						if v, ok := event.(*types.ResponseStreamMemberChunk); ok {
-							// v has fields
-							err := json.Unmarshal([]byte(v.Value.Bytes), &out)
-							if err != nil {
-								log.Printf("unable to decode response:, %v", err)
-								continue
-							}
-							fmt.Printf("%v", out.Generation)
-						} else if v, ok := event.(*types.UnknownUnionMember); ok {
-							// catchall
-							fmt.Print(v.Value)
-						}
-					} else {
-						break
-					}
-				}
-				stream.Close()
-
-				if stream.Err() != nil {
-					log.Fatalf("error from Bedrock, %v", stream.Err())
-				}
-				fmt.Println()
-			default:
-				log.Fatalf("invalid model: %s", m.ModelID)
+			err = processStreamingOutput(output, func(ctx context.Context, part string) error {
+				fmt.Print(part)
+				return nil
+			})
+			if err != nil {
+				log.Fatal("streaming output processing error: ", err)
 			}
 
+			fmt.Println()
 		}
 	},
 }
 
-func readImage(filename string) (string, string, error) {
+type StreamingOutputHandler func(ctx context.Context, part string) error
 
-	data, err := os.ReadFile(filename)
+func processStreamingOutput(output *bedrockruntime.ConverseStreamOutput, handler StreamingOutputHandler) error {
+
+	var combinedResult string
+
+	msg := types.Message{}
+
+	for event := range output.GetStream().Events() {
+		switch v := event.(type) {
+		case *types.ConverseStreamOutputMemberMessageStart:
+
+			msg.Role = v.Value.Role
+
+		case *types.ConverseStreamOutputMemberContentBlockDelta:
+
+			textResponse := v.Value.Delta.(*types.ContentBlockDeltaMemberText)
+			handler(context.Background(), textResponse.Value)
+			combinedResult = combinedResult + textResponse.Value
+
+		case *types.UnknownUnionMember:
+			fmt.Println("unknown tag:", v.Tag)
+		}
+	}
+
+	msg.Content = append(msg.Content,
+		&types.ContentBlockMemberText{
+			Value: combinedResult,
+		},
+	)
+
+	return nil
+}
+
+func readImage(filename string) ([]byte, string, error) {
+
+	// Define a base directory for allowed images
+	baseDir, err := os.Getwd()
 	if err != nil {
-		return "", "", err
+		return nil, "", fmt.Errorf("unable to get working directory: %w", err)
 	}
 
-	//var base64Encoding string
+	// Clean the filename and create the full path
+	cleanFilename := filepath.Clean(filename)
+	fullPath := filepath.Join(baseDir, cleanFilename)
 
-	// Determine the content type of the image file
-	mimeType := http.DetectContentType(data)
+	// Ensure the full path is within the base directory
+	relPath, err := filepath.Rel(baseDir, fullPath)
+	if err != nil || strings.HasPrefix(relPath, "..") || strings.HasPrefix(relPath, string(filepath.Separator)) {
+		return nil, "", fmt.Errorf("access denied: %s is outside of the allowed directory", filename)
+	}
 
-	switch mimeType {
-	case "image/png":
-		fmt.Println()
-	case "image/jpeg":
-		fmt.Println()
-		img, err := jpeg.Decode(bytes.NewReader(data))
-		if err != nil {
-			return "", "", fmt.Errorf("unable to decode jpeg: %w", err)
-		}
+	// Check if the file exists
+	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+		return nil, "", fmt.Errorf("file does not exist: %s", filename)
+	}
 
-		var buf bytes.Buffer
-		if err := png.Encode(&buf, img); err != nil {
-			return "", "", fmt.Errorf("unable to encode png: %w", err)
-		}
-		data = buf.Bytes()
+	// Read the file
+	data, err := os.ReadFile(fullPath)
+	if err != nil {
+		return nil, "", fmt.Errorf("unable to read file: %w", err)
+	}
+
+	ext := strings.ToLower(filepath.Ext(filename))
+	if ext != "" {
+		ext = ext[1:] // Remove the leading dot
+	}
+
+	var imageType string
+
+	switch ext {
+	case "jpg":
+		imageType = "jpeg"
+	case "jpeg":
+		imageType = "jpeg"
+	case "png":
+		imageType = "png"
+	case "gif":
+		imageType = "gif"
+	case "webp":
+		imageType = "webp"
 	default:
-		return "", "", fmt.Errorf("unsupported content typo: %s", mimeType)
+		return nil, "", fmt.Errorf("unsupported file type")
+
 	}
 
-	imgBase64Str := base64.StdEncoding.EncodeToString(data)
-	//r //eturn hdr.Filename, imgBase64Str, nil
-
-	// Print the full base64 representation of the image
-	return imgBase64Str, mimeType, nil
+	return data, imageType, nil
 }
 
 func init() {
 	rootCmd.AddCommand(promptCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
 	promptCmd.PersistentFlags().StringP("model-id", "m", "anthropic.claude-3-haiku-20240307-v1:0", "set the model id")
+	// promptCmd.PersistentFlags().StringP("cross-region-inference", "c", "", "provide a cross-region-inference arn")
 
 	promptCmd.PersistentFlags().StringP("image", "i", "", "path to image")
 	promptCmd.PersistentFlags().Bool("no-stream", false, "return the full response once it has completed")
 
-	promptCmd.PersistentFlags().Float64("temperature", 1, "temperature setting")
-	promptCmd.PersistentFlags().Float64("topP", 0.999, "topP setting")
-	promptCmd.PersistentFlags().Float64("topK", 250, "topK setting")
-	promptCmd.PersistentFlags().Int("max-tokens", 500, "max tokens to sample")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// promptCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// promptCmd.PersistentFlags().Float64("temperature", 1, "temperature setting")
+	// promptCmd.PersistentFlags().Float64("topP", 0.999, "topP setting")
+	// promptCmd.PersistentFlags().Float64("topK", 250, "topK setting")
+	// promptCmd.PersistentFlags().Int("max-tokens", 500, "max tokens to sample")
 }
