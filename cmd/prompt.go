@@ -159,7 +159,7 @@ var promptCmd = &cobra.Command{
 				log.Fatalf("error from Bedrock, %v", err)
 			}
 
-			err = processStreamingOutput(output, func(ctx context.Context, part string) error {
+			_, err = processStreamingOutput(output, func(ctx context.Context, part string) error {
 				fmt.Print(part)
 				return nil
 			})
@@ -174,7 +174,7 @@ var promptCmd = &cobra.Command{
 
 type StreamingOutputHandler func(ctx context.Context, part string) error
 
-func processStreamingOutput(output *bedrockruntime.ConverseStreamOutput, handler StreamingOutputHandler) error {
+func processStreamingOutput(output *bedrockruntime.ConverseStreamOutput, handler StreamingOutputHandler) (types.Message, error) {
 
 	var combinedResult string
 
@@ -203,7 +203,7 @@ func processStreamingOutput(output *bedrockruntime.ConverseStreamOutput, handler
 		},
 	)
 
-	return nil
+	return msg, nil
 }
 
 func readImage(filename string) ([]byte, string, error) {
