@@ -137,9 +137,8 @@ Only streaming response capable models can be used with the `chat` command.
 There are several flags you can use to override the default config settings. Not all config settings are used by each model.
 
     --max-tokens defaults to 500
-    --temperature defaults to 1
+    --temperature defaults to 1.0
     --topP defaults to 0.999
-    --topK defaults to 250
 
 ## Anthropic Claude 3 Vision
 
