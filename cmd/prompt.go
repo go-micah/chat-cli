@@ -64,6 +64,22 @@ var promptCmd = &cobra.Command{
 			log.Fatalf("error: %v", err)
 		}
 
+		// get options
+		temperature, err := cmd.PersistentFlags().GetFloat32("temperature")
+		if err != nil {
+			log.Fatalf("unable to get flag: %v", err)
+		}
+
+		topP, err := cmd.PersistentFlags().GetFloat32("topP")
+		if err != nil {
+			log.Fatalf("unable to get flag: %v", err)
+		}
+
+		maxTokens, err := cmd.PersistentFlags().GetInt32("max-tokens")
+		if err != nil {
+			log.Fatalf("unable to get flag: %v", err)
+		}
+
 		// get feature floag for image attachment
 		image, err := cmd.PersistentFlags().GetString("image")
 		if err != nil {
@@ -128,10 +144,17 @@ var promptCmd = &cobra.Command{
 
 		}
 
+		conf := types.InferenceConfiguration{
+			MaxTokens:   &maxTokens,
+			TopP:        &topP,
+			Temperature: &temperature,
+		}
+
 		if noStream {
 			// set up ConverseInput with model and prompt
 			converseInput := &bedrockruntime.ConverseInput{
-				ModelId: aws.String(m.ModelID),
+				ModelId:         aws.String(m.ModelID),
+				InferenceConfig: &conf,
 			}
 			converseInput.Messages = append(converseInput.Messages, userMsg)
 
@@ -149,7 +172,8 @@ var promptCmd = &cobra.Command{
 
 		} else {
 			converseStreamInput := &bedrockruntime.ConverseStreamInput{
-				ModelId: aws.String(m.ModelID),
+				ModelId:         aws.String(m.ModelID),
+				InferenceConfig: &conf,
 			}
 			converseStreamInput.Messages = append(converseStreamInput.Messages, userMsg)
 
@@ -264,13 +288,11 @@ func readImage(filename string) ([]byte, string, error) {
 func init() {
 	rootCmd.AddCommand(promptCmd)
 	promptCmd.PersistentFlags().StringP("model-id", "m", "anthropic.claude-3-haiku-20240307-v1:0", "set the model id")
-	// promptCmd.PersistentFlags().StringP("cross-region-inference", "c", "", "provide a cross-region-inference arn")
 
 	promptCmd.PersistentFlags().StringP("image", "i", "", "path to image")
 	promptCmd.PersistentFlags().Bool("no-stream", false, "return the full response once it has completed")
 
-	// promptCmd.PersistentFlags().Float64("temperature", 1, "temperature setting")
-	// promptCmd.PersistentFlags().Float64("topP", 0.999, "topP setting")
-	// promptCmd.PersistentFlags().Float64("topK", 250, "topK setting")
-	// promptCmd.PersistentFlags().Int("max-tokens", 500, "max tokens to sample")
+	promptCmd.PersistentFlags().Float32("temperature", 1.0, "temperature setting")
+	promptCmd.PersistentFlags().Float32("topP", 0.999, "topP setting")
+	promptCmd.PersistentFlags().Int32("max-tokens", 500, "max tokens")
 }

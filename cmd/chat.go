@@ -46,6 +46,22 @@ To quit the chat, just type "quit"
 			log.Fatalf("model %s does not support streaming so it can't be used with the chat function", m.ModelID)
 		}
 
+		// get options
+		temperature, err := cmd.PersistentFlags().GetFloat32("temperature")
+		if err != nil {
+			log.Fatalf("unable to get flag: %v", err)
+		}
+
+		topP, err := cmd.PersistentFlags().GetFloat32("topP")
+		if err != nil {
+			log.Fatalf("unable to get flag: %v", err)
+		}
+
+		maxTokens, err := cmd.PersistentFlags().GetInt32("max-tokens")
+		if err != nil {
+			log.Fatalf("unable to get flag: %v", err)
+		}
+
 		// set up connection to AWS
 		region, err := cmd.Parent().PersistentFlags().GetString("region")
 		if err != nil {
@@ -59,8 +75,15 @@ To quit the chat, just type "quit"
 
 		svc := bedrockruntime.NewFromConfig(cfg)
 
+		conf := types.InferenceConfiguration{
+			MaxTokens:   &maxTokens,
+			TopP:        &topP,
+			Temperature: &temperature,
+		}
+
 		converseStreamInput := &bedrockruntime.ConverseStreamInput{
-			ModelId: aws.String(m.ModelID),
+			ModelId:         aws.String(m.ModelID),
+			InferenceConfig: &conf,
 		}
 
 		// initial prompt
@@ -119,10 +142,9 @@ func init() {
 	rootCmd.AddCommand(chatCmd)
 	chatCmd.PersistentFlags().StringP("model-id", "m", "anthropic.claude-3-haiku-20240307-v1:0", "set the model id")
 
-	// chatCmd.PersistentFlags().Float64("temperature", 1, "temperature setting")
-	// chatCmd.PersistentFlags().Float64("topP", 0.999, "topP setting")
-	// chatCmd.PersistentFlags().Float64("topK", 250, "topK setting")
-	// chatCmd.PersistentFlags().Int("max-tokens", 500, "max tokens to sample")
+	chatCmd.PersistentFlags().Float32("temperature", 1.0, "temperature setting")
+	chatCmd.PersistentFlags().Float32("topP", 0.999, "topP setting")
+	chatCmd.PersistentFlags().Int32("max-tokens", 500, "max tokens")
 }
 
 func stringPrompt(label string) string {
