@@ -17,7 +17,7 @@ var versionCmd = &cobra.Command{
 	Long:  `Prints the current version`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// until there is a better way to do this
-		v := "v0.2.1"
+		v := "v0.3.0"
 		o := runtime.GOOS
 		a := runtime.GOARCH
 		fmt.Printf("chat-cli %s, %s/%s\n", v, o, a)
